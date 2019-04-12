@@ -7,7 +7,7 @@ import { HEADER_TOP_BAR_HEIGHT, DEVICE_WIDTH } from '../../commons/LayoutCommon'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { PRICE_COLOR, GREEN, BG_COLOR_GRAY, BG_COLOR_WHITE } from '../../commons/ColorCommon';
 
-const OrderItem = ({item}) => {
+const OrderItem = ({item, onPress}) => {
     let total = item.product.salePrice * item.quantity;
     return (
     <View style={UserOrderScreenStyles.item}>
@@ -54,7 +54,7 @@ const OrderItem = ({item}) => {
         </View>
         <View style={UserOrderScreenStyles.itemRight}>
             <TouchableHighlight style={UserOrderScreenStyles.buttonDel}
-                onPress={this._pressUpdate} underlayColor="transparent">
+                onPress={onPress} underlayColor="transparent">
                 <Text style={{color: PRICE_COLOR, fontWeight: 'bold'}}>x</Text>
             </TouchableHighlight>
         </View>
@@ -83,6 +83,25 @@ export default class CartScreen extends React.Component {
                 console.log('Error: ' + error);
             }
         };
+
+        this.updateCartList = async () => {
+            try {
+                await AsyncStorage.setItem("cart", JSON.stringify(this.state.cartList));
+                let totalSum = this.state.cartList.reduce((sum, item) => (sum + item.product.salePrice * item.quantity), 0);
+                this.setState({totalSum: totalSum});
+            } catch (error) {
+                console.log('Error: ' + error);
+            }
+        };
+
+        this._removeCartItem = this._removeCartItem.bind(this);
+    }
+
+    _removeCartItem(productId) {
+        let cartList = this.state.cartList;
+        cartList.splice(cartList.indexOf(cartList.find(item => item.product._id == productId)), 1);
+        this.setState({cartList: cartList});
+        this.updateCartList();
     }
 
     componentDidMount() {
@@ -94,7 +113,7 @@ export default class CartScreen extends React.Component {
             return <Loading />
         }
         const cartList = this.state.cartList;
-        console.log(cartList)
+        // console.log(cartList)
         const displayStatus = {
             'none' : 'Chưa tiếp nhận',
             'accept' : 'Đã tiếp nhận'
@@ -104,7 +123,7 @@ export default class CartScreen extends React.Component {
                 <StatusBar barStyle='default'/>
                 <ScrollView style={{padding: 8}}>
                     {cartList.map((item, i) => (
-                        <OrderItem key={i} item={item} displayStatus={displayStatus} />
+                        <OrderItem key={i} item={item} onPress={() => this._removeCartItem(item.product._id)} displayStatus={displayStatus} />
                     ))}
                 </ScrollView>
                 <KeyboardAvoidingView behavior="position" scrollEnabled={true}>

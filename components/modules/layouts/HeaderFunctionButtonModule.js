@@ -36,7 +36,7 @@ export default class HeaderFunctionButtonModule extends React.Component {
                 onPress={this._onPressButton} 
                 underlayColor="transparent">
                 <View>
-                  { (this.props.type == 'cart') ? 
+                  { (this.props.type == 'cart' && this.state.cartCount > 0) ? 
                   <View style={HeaderFunctionButtonModuleStyles.viewNum}>
                     <Text style={HeaderFunctionButtonModuleStyles.num}>{this.state.cartCount}</Text>
                   </View> : null }

@@ -86,6 +86,7 @@ export default class DetailScreen extends React.Component {
         if (!cartForm) {
           cartForm = [];
           cartForm.push({
+            id: this.state.product._id,
             quantity: this.state.cartQuantity,
             product: this.state.product
           });
@@ -98,6 +99,7 @@ export default class DetailScreen extends React.Component {
           }
           if (check == -1) {
             cartForm.push({
+              id: this.state.product._id,
               quantity: this.state.cartQuantity,
               product: this.state.product
             });
