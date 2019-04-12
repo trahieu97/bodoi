@@ -4,10 +4,11 @@ import { createAppContainer, createSwitchNavigator, createStackNavigator } from 
 import MainTabNavigator from './MainTabNavigator';
 import HomeScreen from '../screens/HomeScreen';
 import DetailScreen from '../screens/DetailScreen';
+import PersonalInfoScreen from '../screens/user_screen/PersonalInfoScreen';
+import UpdateInfoScreen from '../screens/user_screen/UpdateInfoScreen';
 
 const MainNavigator = createStackNavigator({
-  Home: {screen: HomeScreen},
-  DetailScreen: {screen: DetailScreen},
+  Home: {screen: HomeScreen}
 });
 
 export default createAppContainer(createSwitchNavigator({

@@ -11,35 +11,35 @@ export default class ProductItemModule extends React.Component {
         let product = this.props.value;
         return( 
             <TouchableHighlight style={ProductItemModuleStyles.contain} 
-                onPress={this.props.onPress.bind(this, product.productId)} 
+                onPress={this.props.onPress.bind(this, product._id)} 
                 underlayColor="transparent">
                 <View style={ProductItemModuleStyles.content}>
                     <Image style={ProductItemModuleStyles.image} 
-                        source={product.productImage.source} />
-                    {(product.productName.length <= 16) ? 
+                        source={product.image.source} />
+                    {(product.name.length <= 16) ? 
                         (<Text style={ProductItemModuleStyles.name} numberOfLines={1}>
-                            {product.productName}
+                            {product.name}
                         </Text>)
                         : 
                         (<Text style={ProductItemModuleStyles.name} numberOfLines={2}>
-                            {product.productName}
+                            {product.name}
                         </Text>)
                     }
                     <Text style={ProductItemModuleStyles.price}>
                         <Text style={ProductItemModuleStyles.priceDisplay}>
-                            {product.productSaleOffPrice.toLocaleString('vi')}
+                            {product.salePrice.toLocaleString('vi')}
                         </Text>đ / 
                         <Text style={ProductItemModuleStyles.unitPrice}>
-                            {product.unit}
+                            {product._unit[0].name}
                         </Text>
                     </Text>
                     <Text style={{fontSize: 12, textDecorationLine: 'line-through'}}>
-                        {product.productSalePrice.toLocaleString('vi')}đ
+                        {product.price.toLocaleString('vi')}đ
                     </Text>
-                    {(product.saleOffPercent != 0) ?
+                    {(product.saleOff != 0) ?
                         (<View style={ProductItemModuleStyles.labelSale}>
                             <Text style={ProductItemModuleStyles.salePercent}>
-                                -{product.saleOffPercent}%
+                                -{product.saleOff}%
                             </Text>
                         </View>)
                     : null}

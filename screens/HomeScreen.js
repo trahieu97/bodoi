@@ -14,6 +14,7 @@ import DetailScreen from '../screens/DetailScreen';
 
 import { HEADER_TOP_BAR_HEIGHT, DEVICE_WIDTH } from '../commons/LayoutCommon';
 import { BG_COLOR_GRAY } from '../commons/ColorCommon';
+import API from '../constants/Api';
 import { createStackNavigator } from 'react-navigation'
 
 const PADDING_BODY = 24;
@@ -23,18 +24,27 @@ export default class HomeScreen extends React.Component {
     
   constructor(props) {
     super(props);
-    this.state = {text: 'a'};
+    this.state = {
+      text: '',
+      seenProducts: [],
+      loading: false
+    };
     this._categoryPress = this._categoryPress.bind(this);
     this._requestProductPress = this._requestProductPress.bind(this);
     this._detailProductPress = this._detailProductPress.bind(this);
+    const {navigate} = this.props.navigation;
   }
 
   static navigationOptions = {
-      header: null,
+      header: null
   };
 
   _categoryPress(type) {
-    alert('Item Click is: ' + type);
+    const {navigate} = this.props.navigation;
+    switch(type) {
+      case 'cart' : navigate('CartScreen'); break;
+      default: null;
+    }
   }
 
   _requestProductPress(navigate) {
@@ -43,10 +53,23 @@ export default class HomeScreen extends React.Component {
 
   _detailProductPress(productId) {
     const {navigate} = this.props.navigation;
-    navigate('DetailScreen', {productId : productId});
+    navigate('DetailScreen', {productId: productId});
+  }
+
+  async componentDidMount() {
+    try {
+      const seenProductsApi = await fetch(API.GET_SEEN_PRODUCTS);
+      const products = await seenProductsApi.json();
+      // console.log(products.result);
+      this.setState({seenProducts: products.result, loading: false});
+      // console.log(this.state.seenProducts);
+    } catch(err) {
+        console.log("Error fetching data-----------", err);
+    }
   }
 
   render() {
+    seenProducts = this.state.seenProducts;
     const images = [
       {
         source: {
@@ -108,72 +131,9 @@ export default class HomeScreen extends React.Component {
       },
     ];
 
-    const seenProducts = [
-      {
-        productId: '123456789',
-        productName: 'Sinh tố chanh dây 1 lít',
-        productImage: {
-          source: {
-            uri: url + 'assets/images/products/sinhtochanhday1l.jpg'
-          }
-        },
-        productInputPrice: 120000,
-        productSalePrice: 140000,
-        productSaleOffPrice: 90000,
-        unit: 'Chai',
-        saleOffPercent: 15,
-        quantity: 100
-      },
-      {
-        productId: '123456789',
-        productName: 'Siro Ichchindkd',
-        productImage: {
-          source: {
-            uri: url + 'assets/images/category/coffee-cup.png'
-          }
-        },
-        productInputPrice: 120000,
-        productSalePrice: 11230000,
-        productSaleOffPrice: 90000,
-        unit: 'Chai',
-        saleOffPercent: 15,
-        quantity: 100
-      },
-      {
-        productId: '123456789',
-        productName: 'Siro Ichchi',
-        productImage: {
-          source: {
-            uri: url + 'assets/images/category/coffee-cup.png'
-          }
-        },
-        productInputPrice: 1200000089,
-        productSalePrice: 110000,
-        productSaleOffPrice: 90000,
-        unit: 'chai',
-        saleOffPercent: 15,
-        quantity: 100
-      },
-      {
-        productId: '123456789',
-        productName: 'Siro Ichchi',
-        productImage: {
-          source: {
-            uri: url + 'assets/images/category/coffee-cup.png'
-          }
-        },
-        productInputPrice: 120000,
-        productSalePrice: 110000,
-        productSaleOffPrice: 90000,
-        unit: 'Chai',
-        saleOffPercent: 0,
-        quantity: 100
-      }
-    ];
-
     return (
       <View style={{backgroundColor: BG_COLOR_GRAY}}>
-        <HeaderTopBar type="home"/>
+        <HeaderTopBar navigation={this.props.navigation} type="home"/>
         <ScrollView>
           <ImagesCarousel style={{zIndex: 0}} marginTop={HEADER_TOP_BAR_HEIGHT} images={images} />
           <CategoriesModule dataSource={categories} />
@@ -188,7 +148,7 @@ export default class HomeScreen extends React.Component {
           </View>
           <View>
             <TitleBarModule title="SẢN PHẨM BẠN ĐÃ XEM" />
-            <ProductListModule onPress={this._detailProductPress} dataSource={seenProducts} />
+            <ProductListModule onPress={this._detailProductPress} dataSource={this.state.seenProducts} />
           </View>
         </ScrollView>
       </View>

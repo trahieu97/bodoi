@@ -5,7 +5,14 @@ import HomeScreen from '../screens/HomeScreen';
 import StoresScreen from '../screens/StoresScreen';
 import UserScreen from '../screens/UserScreen';
 import PromotionsScreen from '../screens/PromotionsScreen';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import UpdateInfoScreen from '../screens/user_screen/UpdateInfoScreen';
+import PersonalInfoScreen from '../screens/user_screen/PersonalInfoScreen';
+import ChangePasswordScreen from '../screens/user_screen/ChangePasswordScreen';
+import RequestScreen from '../screens/user_screen/RequestScreen';
+import UsersOrdersScreen from '../screens/user_screen/UserOrdersScreen';
+import DetailScreen from '../screens/DetailScreen';
+import CartScreen from '../screens/cart_screen/CartScreen';
 
 const ACTIVE_TINT_COLOR = '#056839';
 const INACTIVE_TINT_COLOR = '#707070';
@@ -13,7 +20,24 @@ const TAB_BAR_ICON_SIZE = 29;
 
 // Create Home Page Stack
 const HomeStack = createStackNavigator({
-  Home: HomeScreen,
+  Home: {
+    screen: HomeScreen,
+    navigationOptions: {
+      headerBackTitle: 'Quay lại'
+    }
+  },
+  DetailScreen: {
+    screen: DetailScreen,
+    navigationOptions: {
+      headerBackTitle: 'Quay lại'
+    }
+  },
+  CartScreen: {
+    screen: CartScreen,
+    navigationOptions: {
+      headerBackTitle: 'Quay lại'
+    }
+  },
 });
 
 HomeStack.navigationOptions = {
@@ -67,7 +91,13 @@ StoresStack.navigationOptions = {
 
 const UserStack = createStackNavigator({
   UserStack: UserScreen,
+  PersonalInfoScreen: PersonalInfoScreen,
+  UpdateInfoScreen: UpdateInfoScreen,
+  ChangePasswordScreen: ChangePasswordScreen,
+  RequestScreen: RequestScreen,
+  UsersOrdersScreen: UsersOrdersScreen
 });
+
 
 UserStack.navigationOptions = {
   tabBarLabel: 'Tài khoản',

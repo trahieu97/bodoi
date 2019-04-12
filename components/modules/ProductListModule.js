@@ -6,17 +6,15 @@ import ProductItemModule from './ProductItemModule';
 export default class ProductListModule extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            productList: this.props.dataSource
-        };
     }
 
     render() {
-        let productList = this.state.productList;
+        let productList = this.props.dataSource;
+        // console.log(productList);
         return( 
             <View style={ProductListModuleStyles.contain}>
                 {productList.map((product, i) => (
-                    <ProductItemModule onPress={this.props.onPress.bind(this, product.productId)} key={i} value={product} />
+                    <ProductItemModule onPress={this.props.onPress.bind(this, product._id)} key={i} value={product} />
                 ))}
             </View>
         )

@@ -26,7 +26,11 @@ export default class HeaderTopBar extends React.Component {
   }
 
   _onPressFunctionButton(type) {
-    alert('You press ' +type+ ' button');
+    const {navigate} = this.props.navigation;
+    switch(type) {
+      case 'cart' : navigate('CartScreen'); break;
+      default: null;
+    }
   }
 
   render() {

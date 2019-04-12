@@ -24,7 +24,13 @@ export default class UserScreen extends React.Component {
   };
 
   _pressFunction(type) {
-    alert(type);
+    const {navigate} = this.props.navigation;
+    switch (type) {
+      case 'infomation' : navigate('PersonalInfoScreen'); break;
+      case 'changepass' : navigate('ChangePasswordScreen'); break;
+      case 'request' : navigate('RequestScreen'); break;
+      case 'order' : navigate('UsersOrdersScreen'); break;
+    }
   }
 
   render() {
@@ -65,7 +71,7 @@ export default class UserScreen extends React.Component {
         <View style={{backgroundColor: BG_COLOR_WHITE, borderTopLeftRadius: 8, top: -8, padding: 16, paddingTop: 0}}>
         <TouchableHighlight style={{height: 42, width: '100%',
             justifyContent: 'center', alignItems: 'flex-start', borderBottomColor: BG_COLOR_GRAY, borderBottomWidth: 0.5}} 
-            onPress={() => this._pressFunction('information')} 
+            onPress={() => this._pressFunction('infomation')} 
             underlayColor="transparent">
             <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
               <Text style={{color: '#000', width: '90%', justifyContent: 'center', alignItems: 'center'}}>Thông tin cá nhân</Text>
