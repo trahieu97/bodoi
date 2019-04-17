@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Alert, AsyncStorage, KeyboardAvoidingView, View
 import Loading from '../components/Loading';
 
 import { HEADER_TOP_BAR_HEIGHT, DEVICE_WIDTH } from '../commons/LayoutCommon';
+import HeaderFunctionButtonModule from '../components/modules/layouts/HeaderFunctionButtonModule';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BG_COLOR_GRAY, GREEN } from '../commons/ColorCommon';
 import API from '../constants/Api'; 
@@ -52,8 +53,16 @@ const RadioStar = ({star, onPress, status}) => (
             );
 
 export default class DetailScreen extends React.Component {
-  static navigationOptions = {
-    title: 'Chi tiết'
+  static navigationOptions = ({navigation}) => {
+    return {
+      title: 'Chi tiết',
+      headerRight: 
+                <View style={{marginRight: 8}}>
+                  <HeaderFunctionButtonModule
+                      type="detail-cart" iconName="cart-outline"
+                      onPressButton={() => navigation.navigate('CartScreen')} />
+                </View>
+    };
   };
   
   constructor(props) {
@@ -75,8 +84,8 @@ export default class DetailScreen extends React.Component {
         content: ''
       },
       cartQuantity: 1,
-      loading: true
-
+      loading: true,
+      errorLoading: null
     };
 
     this.saveItemCart = async () => {
@@ -229,14 +238,16 @@ export default class DetailScreen extends React.Component {
 
   async componentDidMount() {
     try {
-      // const productApi = await fetch('http://localhost:3000/api/product/5caf44a6f1b04f1e314ddb62');
       const productApi = await fetch(API.GET_ONE_PRODUCT + this.state.productId);
       const product = await productApi.json();
-      // console.log(product);
-      this.setState({product: product.result, loading: false});
-      // console.log(this.state.product);
+      console.log(product)
+      if (!product || product == null || product == [] || product.status == 'error') {
+        this.setState({errorLoading: 'Không tìm thấy sản phẩm', loading: true});
+      } else {
+        this.setState({product: product.result, loading: false});
+      }
     } catch(err) {
-        console.log("Error fetching data-----------", err);
+        this.setState({errorLoading: 'Xin lỗi, hệ thống đang bị vấn đề gì đó. Vui lòng thử lại sau', loading: true});
     }
   }
 
@@ -262,7 +273,7 @@ export default class DetailScreen extends React.Component {
 
   render() {
     if (this.state.loading) {
-      return <Loading />;
+      return <Loading message={this.state.errorLoading} navigation={this.props.navigation}/>;
     } else {
       const product = this.state.product;
       const details = product.detail;

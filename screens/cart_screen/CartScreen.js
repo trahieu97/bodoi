@@ -7,7 +7,7 @@ import { HEADER_TOP_BAR_HEIGHT, DEVICE_WIDTH } from '../../commons/LayoutCommon'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { PRICE_COLOR, GREEN, BG_COLOR_GRAY, BG_COLOR_WHITE } from '../../commons/ColorCommon';
 
-const OrderItem = ({item, onPress}) => {
+const OrderItem = ({item, onPressDelete, onPressPlus, onPressDiv}) => {
     let total = item.product.salePrice * item.quantity;
     return (
     <View style={UserOrderScreenStyles.item}>
@@ -40,21 +40,21 @@ const OrderItem = ({item, onPress}) => {
             </View>
             <View style={UserOrderScreenStyles.addNum}>
                 <TouchableHighlight style={UserOrderScreenStyles.buttonDiv}
-                    onPress={this._pressUpdate} underlayColor="transparent">
+                    onPress={onPressDiv} underlayColor="transparent">
                     <Text style={UserOrderScreenStyles.buttonDivPlusText}>-</Text>
                 </TouchableHighlight>
                 <View style={UserOrderScreenStyles.quantityCart}>
                 <Text style={UserOrderScreenStyles.quantityCartText}>{item.quantity}</Text>
                 </View>
                 <TouchableHighlight style={UserOrderScreenStyles.buttonPlus}
-                    onPress={this._pressUpdate} underlayColor="transparent">
+                    onPress={onPressPlus} underlayColor="transparent">
                     <Text style={UserOrderScreenStyles.buttonDivPlusText}>+</Text>
                 </TouchableHighlight>
             </View>
         </View>
         <View style={UserOrderScreenStyles.itemRight}>
             <TouchableHighlight style={UserOrderScreenStyles.buttonDel}
-                onPress={onPress} underlayColor="transparent">
+                onPress={onPressDelete} underlayColor="transparent">
                 <Text style={{color: PRICE_COLOR, fontWeight: 'bold'}}>x</Text>
             </TouchableHighlight>
         </View>
@@ -70,17 +70,20 @@ export default class CartScreen extends React.Component {
         this.state = {
             cartList: [],
             totalSum: 0,
-            loading: true
+            loading: true,
+            errorLoading: null
         };
         this.getCartList = async () => {
             try {
                 let cartForm = JSON.parse(await AsyncStorage.getItem("cart"));
-                if (cartForm) {
+                if (cartForm.length > 0) {
                     let totalSum = cartForm.reduce((sum, item) => (sum + item.product.salePrice * item.quantity), 0);
                     this.setState({cartList: cartForm, loading: false, totalSum: totalSum});
+                } else {
+                    this.setEmptyCartMessage();
                 }
             } catch (error) {
-                console.log('Error: ' + error);
+                this.setState({errorLoading: 'Có lỗi gì đó xãy ra. Vui lòng thử lại sau', loading: true});
             }
         };
 
@@ -95,6 +98,12 @@ export default class CartScreen extends React.Component {
         };
 
         this._removeCartItem = this._removeCartItem.bind(this);
+        this._divCartItem = this._divCartItem.bind(this);
+        this._plusCartItem = this._plusCartItem.bind(this);
+    }
+
+    setEmptyCartMessage() {
+        this.setState({errorLoading: 'Bạn chưa thêm sản phẩm nào vào giỏ hàng cả', loading: true});
     }
 
     _removeCartItem(productId) {
@@ -102,6 +111,33 @@ export default class CartScreen extends React.Component {
         cartList.splice(cartList.indexOf(cartList.find(item => item.product._id == productId)), 1);
         this.setState({cartList: cartList});
         this.updateCartList();
+        if (this.state.cartList.length <= 0) {
+            this.setEmptyCartMessage();
+        }
+    }
+
+    _divCartItem(productId, min) {
+        this.executeDivPlusItemCart(productId, min, 'div');
+    }
+
+    _plusCartItem(productId, min) {
+        this.executeDivPlusItemCart(productId, min, 'plus');
+    }
+
+    executeDivPlusItemCart(productId, min, type) {
+        let cartList = this.state.cartList;
+        let cartItem = cartList.find(item => item.product._id == productId);
+        let currentQuantity = cartItem.quantity;
+        if (type === 'plus' && cartItem.quantity >= min) {
+            cartItem.quantity += min;
+        }
+        if (type === 'div' && cartItem.quantity > min) {
+            cartItem.quantity -= min;
+        }
+        if (currentQuantity != cartItem.quantity) {
+            this.setState({cartList: cartList});
+            this.updateCartList();
+        }
     }
 
     componentDidMount() {
@@ -110,7 +146,7 @@ export default class CartScreen extends React.Component {
 
     render() {
         if (this.state.loading) {
-            return <Loading />
+            return <Loading message={this.state.errorLoading} navigation={this.props.navigation}/>
         }
         const cartList = this.state.cartList;
         // console.log(cartList)
@@ -123,7 +159,11 @@ export default class CartScreen extends React.Component {
                 <StatusBar barStyle='default'/>
                 <ScrollView style={{padding: 8}}>
                     {cartList.map((item, i) => (
-                        <OrderItem key={i} item={item} onPress={() => this._removeCartItem(item.product._id)} displayStatus={displayStatus} />
+                        <OrderItem key={i} item={item} 
+                            onPressDelete={() => this._removeCartItem(item.product._id)} 
+                            onPressDiv={() => this._divCartItem(item.product._id, item.product._unit[0].minUnit)} 
+                            onPressPlus={() => this._plusCartItem(item.product._id, item.product._unit[0].minUnit)} 
+                            displayStatus={displayStatus} />
                     ))}
                 </ScrollView>
                 <KeyboardAvoidingView behavior="position" scrollEnabled={true}>
@@ -150,6 +190,7 @@ export default class CartScreen extends React.Component {
                         <View style={{flexDirection: 'row'}}>
                             <TouchableHighlight style={{height: 40, width: 180, marginLeft: 8, backgroundColor: '#056839', 
                                 justifyContent: 'center', alignItems: 'center'}} 
+                                onPress={() => this.props.navigation.navigate('ShippingAddressScreen')}
                                 underlayColor="transparent">
                                 <Text style={{color: '#fff'}}>Tiến hành đặt hàng</Text>
                             </TouchableHighlight>

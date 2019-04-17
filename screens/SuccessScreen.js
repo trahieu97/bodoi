@@ -2,7 +2,7 @@ import React from 'react';
 import { StatusBar, View, Image, StyleSheet, TouchableHighlight, Text } from 'react-native';
 import { GREEN } from '../commons/ColorCommon';
 
-export default class Loading extends React.Component {
+export default class SuccessScreen extends React.Component {
   render() {
     const {navigate} = this.props.navigation;
     return (
@@ -28,7 +28,7 @@ const LoadingStyles = StyleSheet.create({
     view: {
         alignItems: 'center', 
         height: '100%', 
-        padding: 48, 
+        padding: 48,
         justifyContent: 'center'
     },
     error: {

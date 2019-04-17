@@ -13,6 +13,8 @@ import RequestScreen from '../screens/user_screen/RequestScreen';
 import UsersOrdersScreen from '../screens/user_screen/UserOrdersScreen';
 import DetailScreen from '../screens/DetailScreen';
 import CartScreen from '../screens/cart_screen/CartScreen';
+import ConfirmOrderScreen from '../screens/cart_screen/ConfirmOrderScreen';
+import ShippingAddressScreen from '../screens/cart_screen/ShippingAddressScreen';
 
 const ACTIVE_TINT_COLOR = '#056839';
 const INACTIVE_TINT_COLOR = '#707070';
@@ -38,6 +40,8 @@ const HomeStack = createStackNavigator({
       headerBackTitle: 'Quay lại'
     }
   },
+  ConfirmOrderScreen: ConfirmOrderScreen,
+  ShippingAddressScreen: ShippingAddressScreen
 });
 
 HomeStack.navigationOptions = {

@@ -1,8 +1,11 @@
 import React from 'react';
 import { Text, StyleSheet, AsyncStorage, TouchableHighlight, View} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { GREEN } from '../../../commons/ColorCommon';
 
 export default class HeaderFunctionButtonModule extends React.Component {
+
+  _isMounted = false;
 
   constructor(props) {
     super(props);
@@ -27,16 +30,25 @@ export default class HeaderFunctionButtonModule extends React.Component {
   }
 
   componentDidMount() {
-    setInterval(() => this.getCartCount(), 1000);
+    this._isMounted = true;
+    if (this._isMounted) {
+      setInterval(() => this.getCartCount(), 1000);
+    }
+  }
+
+  componentWillUnmount() {
+    console.log('Mounted')
   }
   
   render() {
+        const VIEW_RIGHT_BUTTON_ICON = (this.props.type == 'detail-cart') ? GREEN : '#fff';
         return (
             <TouchableHighlight style={HeaderFunctionButtonModuleStyles.contain}
                 onPress={this._onPressButton} 
                 underlayColor="transparent">
                 <View>
-                  { (this.props.type == 'cart' && this.state.cartCount > 0) ? 
+                  { (this.props.type == 'cart' && this.state.cartCount > 0 || 
+                    this.props.type == 'detail-cart' && this.state.cartCount > 0) ? 
                   <View style={HeaderFunctionButtonModuleStyles.viewNum}>
                     <Text style={HeaderFunctionButtonModuleStyles.num}>{this.state.cartCount}</Text>
                   </View> : null }
@@ -49,7 +61,6 @@ export default class HeaderFunctionButtonModule extends React.Component {
 }
 
 const SEARCH_FORM_HEIGHT = 32;
-const VIEW_RIGHT_BUTTON_ICON = '#fff';
 
 const HeaderFunctionButtonModuleStyles = StyleSheet.create({
   contain: {
