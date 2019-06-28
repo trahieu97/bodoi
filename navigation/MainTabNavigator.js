@@ -40,6 +40,12 @@ const HomeStack = createStackNavigator({
       headerBackTitle: 'Quay lại'
     }
   },
+  UsersOrdersScreen: {
+    screen: UsersOrdersScreen,
+    navigationOptions: {
+      headerBackTitle: 'Quay lại'
+    }
+  },
   ConfirmOrderScreen: ConfirmOrderScreen,
   ShippingAddressScreen: ShippingAddressScreen
 });

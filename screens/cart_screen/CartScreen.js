@@ -1,11 +1,12 @@
 import React from 'react';
 import { KeyboardAvoidingView, ScrollView, StyleSheet, View, Text,
-    TextInput, Image, StatusBar, TouchableHighlight, AsyncStorage} from 'react-native';
+    TextInput, Image, StatusBar, TouchableHighlight, AsyncStorage, Alert} from 'react-native';
 import Loading from '../../components/Loading';
 
 import { HEADER_TOP_BAR_HEIGHT, DEVICE_WIDTH } from '../../commons/LayoutCommon';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { PRICE_COLOR, GREEN, BG_COLOR_GRAY, BG_COLOR_WHITE } from '../../commons/ColorCommon';
+import API from '../../constants/Api'; 
 
 const OrderItem = ({item, onPressDelete, onPressPlus, onPressDiv}) => {
     let total = item.product.salePrice * item.quantity;
@@ -64,7 +65,7 @@ export default class CartScreen extends React.Component {
     static navigationOptions = {
         title: 'Giỏ hàng'
     };
-  
+
     constructor(props) {
         super(props);
         this.state = {
@@ -75,13 +76,39 @@ export default class CartScreen extends React.Component {
         };
         this.getCartList = async () => {
             try {
-                let cartForm = JSON.parse(await AsyncStorage.getItem("cart"));
-                if (cartForm.length > 0) {
-                    let totalSum = cartForm.reduce((sum, item) => (sum + item.product.salePrice * item.quantity), 0);
-                    this.setState({cartList: cartForm, loading: false, totalSum: totalSum});
-                } else {
-                    this.setEmptyCartMessage();
-                }
+                // let cartForm = JSON.parse(await AsyncStorage.getItem("cart"));
+                let cartForm = [];
+                fetch(API.GET_ALL_CART_ITEM, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        token: 'dkjflkewfleflewlfijewifjiweof'
+                    }),
+                })
+                .then(async (response) => {
+                    if (response.status === 200) {
+                        let body = JSON.parse(response._bodyInit);
+                        let data =  body.data;
+                        console.log(data)
+                        if (data) {
+                            cartForm = await data.cartList;
+                            if (cartForm.length > 0) {
+                                let totalSum = cartForm.reduce((sum, item) => (sum + item.product.salePrice * item.quantity), 0);
+                                this.setState({cartList: cartForm, loading: false, totalSum: totalSum});
+                            }
+                        } else {
+                            this.setEmptyCartMessage();
+                        }
+                    } else {
+                        this.setEmptyCartMessage();
+                    }
+                }).catch((error) => {
+                    Alert.alert('Thông báo', 'Có lỗi khuy truy xuất giỏ hàng');
+                    console.error(error);
+                });
             } catch (error) {
                 this.setState({errorLoading: 'Có lỗi gì đó xãy ra. Vui lòng thử lại sau', loading: true});
             }
@@ -89,7 +116,25 @@ export default class CartScreen extends React.Component {
 
         this.updateCartList = async () => {
             try {
-                await AsyncStorage.setItem("cart", JSON.stringify(this.state.cartList));
+                // await AsyncStorage.setItem("cart", JSON.stringify(this.state.cartList));
+                fetch(API.ADD_TO_CART, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        token: 'dkjflkewfleflewlfijewifjiweof',
+                        cart: this.state.cartList
+                    }),
+                })
+                .then((response) => {
+                    if (response.status !== 200)
+                        Alert.alert('Thông báo', 'Cập nhật giỏ hàng thất bại!!');
+                }).catch((error) => {
+                    Alert.alert('Thông báo', 'Có lỗi khi cập nhật giỏ hàng. Vui lòng thử lại sau');
+                    console.error(error);
+                });
                 let totalSum = this.state.cartList.reduce((sum, item) => (sum + item.product.salePrice * item.quantity), 0);
                 this.setState({totalSum: totalSum});
             } catch (error) {
@@ -144,6 +189,10 @@ export default class CartScreen extends React.Component {
         this.getCartList();
     }
 
+    _onPressToCheckout() {
+        this.props.navigation.navigate('ShippingAddressScreen');
+    }
+
     render() {
         if (this.state.loading) {
             return <Loading message={this.state.errorLoading} navigation={this.props.navigation}/>
@@ -190,7 +239,7 @@ export default class CartScreen extends React.Component {
                         <View style={{flexDirection: 'row'}}>
                             <TouchableHighlight style={{height: 40, width: 180, marginLeft: 8, backgroundColor: '#056839', 
                                 justifyContent: 'center', alignItems: 'center'}} 
-                                onPress={() => this.props.navigation.navigate('ShippingAddressScreen')}
+                                onPress={() => this._onPressToCheckout()}
                                 underlayColor="transparent">
                                 <Text style={{color: '#fff'}}>Tiến hành đặt hàng</Text>
                             </TouchableHighlight>

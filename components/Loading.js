@@ -28,7 +28,7 @@ const LoadingStyles = StyleSheet.create({
     view: {
         alignItems: 'center', 
         height: '100%', 
-        padding: 48, 
+        padding: 48,
         justifyContent: 'center'
     },
     error: {

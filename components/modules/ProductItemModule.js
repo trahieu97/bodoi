@@ -34,12 +34,12 @@ export default class ProductItemModule extends React.Component {
                         </Text>
                     </Text>
                     <Text style={{fontSize: 12, textDecorationLine: 'line-through'}}>
-                        {product.price.toLocaleString('vi')}đ
+                        {product.inputPrice.toLocaleString('vi')}đ
                     </Text>
                     {(product.saleOff != 0) ?
                         (<View style={ProductItemModuleStyles.labelSale}>
                             <Text style={ProductItemModuleStyles.salePercent}>
-                                -{product.saleOff}%
+                                -{product.salePercent}%
                             </Text>
                         </View>)
                     : null}

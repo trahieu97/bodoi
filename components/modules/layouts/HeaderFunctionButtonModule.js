@@ -29,17 +29,6 @@ export default class HeaderFunctionButtonModule extends React.Component {
     this.props.onPressButton(this.props.type);
   }
 
-  componentDidMount() {
-    this._isMounted = true;
-    if (this._isMounted) {
-      setInterval(() => this.getCartCount(), 1000);
-    }
-  }
-
-  componentWillUnmount() {
-    console.log('Mounted')
-  }
-  
   render() {
         const VIEW_RIGHT_BUTTON_ICON = (this.props.type == 'detail-cart') ? GREEN : '#fff';
         return (

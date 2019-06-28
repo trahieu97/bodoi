@@ -90,36 +90,69 @@ export default class DetailScreen extends React.Component {
 
     this.saveItemCart = async () => {
       try {
-        let cartForm = JSON.parse(await AsyncStorage.getItem("cart"));
-
-        if (!cartForm) {
-          cartForm = [];
-          cartForm.push({
-            id: this.state.product._id,
-            quantity: this.state.cartQuantity,
-            product: this.state.product
-          });
-        } else {
-          let check = -1;
-          for (item in cartForm) {
-            if (cartForm[item].product._id == this.state.product._id) {
-              check = item;
+        // let cartForm = JSON.parse(await AsyncStorage.getItem("cart"));
+        let cartForm = [];
+        fetch(API.GET_ALL_CART_ITEM, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+          'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            token: 'dkjflkewfleflewlfijewifjiweof'
+          }),
+        })
+        .then(async (response) => {
+          if (response.status === 200) {
+            let body = JSON.parse(response._bodyInit);
+            cartForm = await body.data.cartList;
+            let check = -1;
+            for (item in cartForm) {
+              if (cartForm[item].product._id == this.state.product._id) {
+                check = item;
+              }
             }
-          }
-          if (check == -1) {
+            if (check == -1) {
+              cartForm.push({
+                id: this.state.product._id,
+                quantity: this.state.cartQuantity,
+                product: this.state.product
+              });
+            } else {              
+              cartForm[check].quantity = cartForm[check].quantity + this.state.cartQuantity;
+            }
+          } else {
             cartForm.push({
               id: this.state.product._id,
               quantity: this.state.cartQuantity,
               product: this.state.product
             });
-          } else {
-            cartForm[check].quantity = cartForm[check].quantity + this.state.cartQuantity;
           }
-        }
-        await AsyncStorage.setItem('cart', JSON.stringify(cartForm));
-        Alert.alert('Thông báo', 'Thêm vào giỏ hàng thành công!!');
-        console.log(cartForm);
-
+          // Save
+          fetch(API.ADD_TO_CART, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                token: 'dkjflkewfleflewlfijewifjiweof',
+                cart: cartForm
+            }),
+          })
+          .then((response) => {
+            if (response.status === 200)
+              Alert.alert('Thông báo', 'Thêm vào giỏ hàng thành công!!');
+          }).catch((error) => {
+            Alert.alert('Thông báo', 'Có lỗi khi thêm vào giỏ hàng. Vui lòng thử lại sau');
+            console.error(error);
+          });
+        }).catch((error) => {
+          Alert.alert('Thông báo', 'Có lỗi khuy truy xuất giỏ hàng');
+          console.error(error);
+        });
+        // await AsyncStorage.setItem('cart', JSON.stringify(cartForm));
+        
         // await AsyncStorage.removeItem("cart");
       } catch (error) {
         Alert.alert('Thông báo', 'Có lỗi khi thêm vào giỏ hàng. Vui lòng thử lại sau');
@@ -327,13 +360,13 @@ export default class DetailScreen extends React.Component {
                     </Text>
                 </Text>
                 <Text style={{fontSize: 12, color: '#999', paddingLeft: 8, textDecorationLine: 'line-through'}}>
-                    {product.price.toLocaleString('vi')}đ
+                    {product.inputPrice.toLocaleString('vi')}đ
                 </Text>
               </View>
               <Text style={{fontWeight: 'bold', textDecorationLine: 'underline', paddingTop: 8, paddingBottom: 8}}>Chi tiết:</Text>
-              <View>
+              {/* <View>
                 {productDetailRender}
-              </View>
+              </View> */}
               <Text style={{paddingTop: 8, textDecorationLine: 'underline', color: '#2680EB', alignSelf: 'center'}}>Xem thêm</Text>
               <Text style={{fontWeight: 'bold', textDecorationLine: 'underline', paddingTop: 8, paddingBottom: 8}}>Mô tả:</Text>
               <Text style={{width: DEVICE_WIDTH - 32, textAlign: 'justify'}} numberOfLines={3}>Chanh là loại quả có rất nhiều công dụng trong cuộc sống: làm gia vị, pha nước, làm đẹp... được con người sử dụng hàng ngày. Ngoài ra</Text>

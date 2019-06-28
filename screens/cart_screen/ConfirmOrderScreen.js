@@ -6,6 +6,7 @@ import { HEADER_TOP_BAR_HEIGHT, DEVICE_WIDTH } from '../../commons/LayoutCommon'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BG_COLOR_GRAY, GREEN, LINK } from '../../commons/ColorCommon';
 import Loading from '../../components/Loading';
+import API from '../../constants/Api'; 
 
 const Title = ({name}) => (
     <Text style={ConfirmOrderStyles.title}>{name}</Text>
@@ -68,162 +69,212 @@ export default class ConfirmOrderScreen extends React.Component {
   static navigationOptions = {
     title: 'Xác nhận đơn hàng'
   };
-  
-  constructor(props) {
-    super(props);
-    this._pressUpdate = this._pressUpdate.bind(this);
-    this.state = {
-        user: this.getUser(),
-        cartList: [],
-        loading: true,
-        errorLoading: null,
-        totalSum: 0,
-        paymentMethod: null,
-        radioPayment: {
-            cod: true,
-            momo: false
-        }
-    };
 
-    this.getCartList = async () => {
-        try {
-            let cartForm = JSON.parse(await AsyncStorage.getItem("cart"));
-            console.log("Cart" + cartForm);
-            if (cartForm.length > 0) {
-                let totalSum = cartForm.reduce((sum, item) => (sum + item.product.salePrice * item.quantity), 0);
-                this.setState({cartList: cartForm, loading: false, totalSum: totalSum});
-            } else {
-                this.setEmptyCartMessage();
+    constructor(props) {
+        super(props);
+        this._pressUpdate = this._pressUpdate.bind(this);
+        this.state = {
+            user: this.getUser(),
+            cartList: [],
+            loading: true,
+            errorLoading: null,
+            totalSum: 0,
+            paymentMethod: null,
+            radioPayment: {
+                cod: true,
+                momo: false
             }
-        } catch (error) {
-            this.setState({errorLoading: 'Có lỗi gì đó xãy ra. Vui lòng thử lại sau', loading: true});
-        }
-    };
+        };
 
-    this._pressPaymentMethod = this._pressPaymentMethod.bind(this);
-  }
+        this.getCartList = async () => {
+            try {
+                let cartForm = [];
+                fetch(API.GET_ALL_CART_ITEM, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        token: 'dkjflkewfleflewlfijewifjiweof'
+                    }),
+                })
+                .then(async (response) => {
+                    if (response.status === 200) {
+                        let body = JSON.parse(response._bodyInit);
+                        let data =  body.data;
+                        console.log(data)
+                        if (data) {
+                            cartForm = await data.cartList;
+                            if (cartForm.length > 0) {
+                                let totalSum = cartForm.reduce((sum, item) => (sum + item.product.salePrice * item.quantity), 0);
+                                this.setState({cartList: cartForm, loading: false, totalSum: totalSum});
+                            }
+                        } else {
+                            this.setEmptyCartMessage();
+                        }
+                    } else {
+                        this.setEmptyCartMessage();
+                    }
+                }).catch((error) => {
+                    Alert.alert('Thông báo', 'Có lỗi khuy truy xuất giỏ hàng');
+                    console.error(error);
+                });
+            } catch (error) {
+                console.log(error)
+                this.setState({errorLoading: 'Có lỗi gì đó xãy ra. Vui lòng thử lại sau', loading: true});
+            }
+        };
 
-  getUser() {
-    let user = {
-      name: 'Hoàng Anh Tuấn',
-      phone: '0123456789',
-      storeName: 'Kem Xoi chu Bo Doi',
-      address: '123 Điện Biên Phủ, Thanh Khê, Đà Nẵng',
-      avatar: '',
-      point: '123',
-      totalMoney: 123000
-    };
-    return user;
-  }
+        this._pressPaymentMethod = this._pressPaymentMethod.bind(this);
+        this._executeOrder = this._executeOrder.bind(this);
+    }
 
-  _pressUpdate() {
+    getUser() {
+        let user = {
+        name: 'Hoàng Anh Tuấn',
+        phone: '0123456789',
+        storeName: 'Kem Xoi chu Bo Doi',
+        address: '123 Điện Biên Phủ, Thanh Khê, Đà Nẵng',
+        avatar: '',
+        point: '123',
+        totalMoney: 123000
+        };
+        return user;
+    }
+
+    _pressUpdate() {
     const {navigate} = this.props.navigation;
     navigate('UpdateInfoScreen');
-  }
-
-  _pressPaymentMethod(method) {
-      this.setState({radioPayment: {
-          cod: this.calculatorActivePayment('cod', method),
-          momo: this.calculatorActivePayment('momo', method)
-      }});
-  }
-
-  calculatorActivePayment(current, method) {
-      return current === method;
-  }
-
-  componentDidMount() {
-    this.getCartList();
-  }
-  
-  render() {
-    if (this.state.loading) {
-        return <Loading message={this.state.errorLoading} navigation={this.props.navigation}/>
     }
-    const itemCartRender = [];
-    const user = this.state.user;
-    const cartList = this.state.cartList;
+
+    _pressPaymentMethod(method) {
+        this.setState({radioPayment: {
+            cod: this.calculatorActivePayment('cod', method),
+            momo: this.calculatorActivePayment('momo', method)
+        }});
+    }
+
+    calculatorActivePayment(current, method) {
+        return current === method;
+    }
+
+    componentDidMount() {
+        this.getCartList();
+    }
+
+    _executeOrder() {
+        // listCartItem = 
+
+        fetch('http://app-tratanhieu.herokuapp.com/order/create', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                firstParam: 'yourValue',
+                secondParam: 'yourOtherValue',
+            }),
+        })
+        .then((response) => alert('Đặt hành thành công'))
+        .catch((error) => {
+            console.error(error);
+        });
+        
+
+        const {navigate} = this.props.navigation;
+        navigate('UsersOrdersScreen');
+    }
+
+    render() {
+        if (this.state.loading) {
+            return <Loading message={this.state.errorLoading} navigation={this.props.navigation}/>
+        }
+        const itemCartRender = [];
+        const user = this.state.user;
+        const cartList = this.state.cartList;
     
-    cartList.map((item, i) => {
-        itemCartRender.push(<ItemRow key={i} item={item} />);
-    });
-    return (
-      <ScrollView style={ConfirmOrderStyles.container}>
-        <StatusBar barStyle='default'/>
-        <Title name='Thông tin sản phẩm mua:' />
-        <View>
-            {itemCartRender}
-        </View>
-        <Title name='Giao đến: ' />
-        <View style={ConfirmOrderStyles.borderDefault}>
-            <Label label='Anh/Chị' value='Hoàng Anh Tuấn' />
-            <Label label='Điện thoại' value='0123456789' />
-            <Label label='Tên quán' value='Kem xôi Chú Bộ Đội' />
-            <Label label='Địa chỉ' value='123 Lý Tự Trọng, Q.Hải Châu, TP. Đà Nẵng' />
-            <Label label='Ghi chú' value='1fwehffhksdkfhwkghkrhksehkghwerkhgiohiohsdh ưhihwio hio giơhiog hiohgo ioghio hewrigrger' />
-         </View>
-        <View style={ConfirmOrderStyles.row}>
-            <Text style={ConfirmOrderStyles.title}>Mã giảm giá: </Text>
-            <Text style={ConfirmOrderStyles.promotionCode}>ABCXYZ</Text>
-            <Text>
-                (<Text style={ConfirmOrderStyles.price}>
-                    <Text style={ConfirmOrderStyles.boldDisplay}>
-                        -{(128000).toLocaleString('vi')}
-                    </Text>đ
-                </Text>)
-            </Text>
-        </View>
-        <View style={ConfirmOrderStyles.row}>
-            <Text style={ConfirmOrderStyles.title}>Số điểm hiện có: </Text>
-            <Text style={ConfirmOrderStyles.currentPoint}>123 </Text>
-            <Text>
-                = <Text style={ConfirmOrderStyles.price}>
-                    <Text style={ConfirmOrderStyles.boldDisplay}>
-                        {(128000).toLocaleString('vi')}
-                    </Text>đ
-                </Text>
-            </Text>
-            <TouchableHighlight
-                onPress={() => alert('Ok')} underlayColor="transparent">
-                <Text style={{color: LINK, textDecorationLine: 'underline'}}> sử dụng</Text>
-            </TouchableHighlight>
-        </View>
-        <View style={ConfirmOrderStyles.row}>
-            <Text style={ConfirmOrderStyles.title}>Phí ship: </Text>
-            <Text>
-                <Text style={ConfirmOrderStyles.price}>
-                    <Text style={ConfirmOrderStyles.boldDisplay}>
-                         {(15000).toLocaleString('vi')}
-                    </Text>đ
-                </Text>
-            </Text>
-        </View>
-        <View style={ConfirmOrderStyles.row}>
-            <Text style={ConfirmOrderStyles.title}>Thành tiền: </Text>
-            <Text>
-                <Text style={ConfirmOrderStyles.price}>
-                    <Text style={ConfirmOrderStyles.boldDisplay}>
-                         {(128000).toLocaleString('vi')}
-                    </Text>đ
-                </Text>
-            </Text>
-        </View>
-        <View style={ConfirmOrderStyles.row}>
-            <Text style={ConfirmOrderStyles.title}>Tích luỹ: </Text>
-            <Text><Text style={ConfirmOrderStyles.currentPoint}>11</Text> điểm</Text>
-        </View>
-        <Title name='Phương thức thanh toán:' />
-        <RadioButtonLabel label='Thanh toán khi nhận hàng' status={this.state.radioPayment.cod}
-            onPress={() => this._pressPaymentMethod('cod')} />
-        <RadioButtonLabel label='Thanh toán Momo' status={this.state.radioPayment.momo}
-            onPress={() => this._pressPaymentMethod('momo')} />
-        <TouchableHighlight style={ConfirmOrderStyles.button}
-            onPress={() => this.props.navigation.navigate('ShippingAddressScreen')} underlayColor="transparent">
-            <Text style={{color: '#FFFFFF'}}>Tiếp tục</Text>
-        </TouchableHighlight>
-      </ScrollView>
-    );
-  }
+        cartList.map((item, i) => {
+            itemCartRender.push(<ItemRow key={i} item={item} />);
+        });
+        return (
+            <ScrollView style={ConfirmOrderStyles.container}>
+                <StatusBar barStyle='default'/>
+                <Title name='Thông tin sản phẩm mua:' />
+                <View>
+                    {itemCartRender}
+                </View>
+                <Title name='Giao đến: ' />
+                <View style={ConfirmOrderStyles.borderDefault}>
+                    <Label label='Anh/Chị' value='Hoàng Anh Tuấn' />
+                    <Label label='Điện thoại' value='0123456789' />
+                    <Label label='Tên quán' value='Kem xôi Chú Bộ Đội' />
+                    <Label label='Địa chỉ' value='123 Lý Tự Trọng, Q.Hải Châu, TP. Đà Nẵng' />
+                    <Label label='Ghi chú' value='1fwehffhksdkfhwkghkrhksehkghwerkhgiohiohsdh ưhihwio hio giơhiog hiohgo ioghio hewrigrger' />
+                </View>
+                <View style={ConfirmOrderStyles.row}>
+                    <Text style={ConfirmOrderStyles.title}>Mã giảm giá: </Text>
+                    <Text style={ConfirmOrderStyles.promotionCode}>ABCXYZ</Text>
+                    <Text>
+                        (<Text style={ConfirmOrderStyles.price}>
+                            <Text style={ConfirmOrderStyles.boldDisplay}>
+                                -{(128000).toLocaleString('vi')}
+                            </Text>đ
+                        </Text>)
+                    </Text>
+                </View>
+                <View style={ConfirmOrderStyles.row}>
+                    <Text style={ConfirmOrderStyles.title}>Số điểm hiện có: </Text>
+                    <Text style={ConfirmOrderStyles.currentPoint}>123 </Text>
+                    <Text>
+                        = <Text style={ConfirmOrderStyles.price}>
+                            <Text style={ConfirmOrderStyles.boldDisplay}>
+                                {(128000).toLocaleString('vi')}
+                            </Text>đ
+                        </Text>
+                    </Text>
+                    <TouchableHighlight
+                        onPress={() => alert('Ok')} underlayColor="transparent">
+                        <Text style={{color: LINK, textDecorationLine: 'underline'}}> sử dụng</Text>
+                    </TouchableHighlight>
+                </View>
+                <View style={ConfirmOrderStyles.row}>
+                    <Text style={ConfirmOrderStyles.title}>Phí ship: </Text>
+                    <Text>
+                        <Text style={ConfirmOrderStyles.price}>
+                            <Text style={ConfirmOrderStyles.boldDisplay}>
+                                    {(15000).toLocaleString('vi')}
+                            </Text>đ
+                        </Text>
+                    </Text>
+                </View>
+                <View style={ConfirmOrderStyles.row}>
+                    <Text style={ConfirmOrderStyles.title}>Thành tiền: </Text>
+                    <Text>
+                        <Text style={ConfirmOrderStyles.price}>
+                            <Text style={ConfirmOrderStyles.boldDisplay}>
+                                {(128000).toLocaleString('vi')}
+                            </Text>đ
+                        </Text>
+                    </Text>
+                </View>
+                <View style={ConfirmOrderStyles.row}>
+                    <Text style={ConfirmOrderStyles.title}>Tích luỹ: </Text>
+                    <Text><Text style={ConfirmOrderStyles.currentPoint}>11</Text> điểm</Text>
+                </View>
+                <Title name='Phương thức thanh toán:' />
+                <RadioButtonLabel label='Thanh toán khi nhận hàng' status={this.state.radioPayment.cod}
+                    onPress={() => this._pressPaymentMethod('cod')} />
+                <RadioButtonLabel label='Thanh toán Momo' status={this.state.radioPayment.momo}
+                    onPress={() => this._pressPaymentMethod('momo')} />
+                <TouchableHighlight style={ConfirmOrderStyles.button}
+                    onPress={() => this._executeOrder()} underlayColor="transparent">
+                    <Text style={{color: '#FFFFFF'}}>Đặt hàng</Text>
+                </TouchableHighlight>
+            </ScrollView>
+        );
+    }
 }
 
 

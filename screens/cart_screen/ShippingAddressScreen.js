@@ -1,11 +1,13 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View, Text,
-  Modal, TextInput, StatusBar, TouchableHighlight, Picker, KeyboardAvoidingView} from 'react-native';
+  Modal, TextInput, StatusBar, TouchableHighlight, Picker, KeyboardAvoidingView, Alert} from 'react-native';
+  import Loading from '../../components/Loading';
 // import ImagesCarousel from '../components/modules/product/DetailImageScroll';
 
 import { HEADER_TOP_BAR_HEIGHT, DEVICE_WIDTH } from '../../commons/LayoutCommon';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BG_COLOR_GRAY, GREEN } from '../../commons/ColorCommon';
+import API from '../../constants/Api'; 
 
 const Title = ({name}) => (
   <Text style={{fontWeight: 'bold', textDecorationLine: 'underline', paddingBottom: 8, paddingTop: 8}}>{name}</Text>
@@ -62,8 +64,23 @@ export default class ShippingAddressScreen extends React.Component {
     this._pressConfirm = this._pressConfirm.bind(this);
     this._setVisibleModal = this._setVisibleModal.bind(this);
     this.state = {
-      user: this.getUser(),
+      otherAddress: {
+        province: {
+          itemCode : '',
+          itemValue : 'Tỉnh/Thành phố'
+        },
+        district: {
+          itemCode : '',
+          itemValue : 'Quận/Huyện'
+        },
+        ward: {
+          itemCode : '',
+          itemValue :'Xã/Phường'
+        },
+        address: ''
+      },
       radioButtonDefault: true,
+      loading: true,
       note: '',
       provinces: [
         { 
@@ -165,14 +182,31 @@ export default class ShippingAddressScreen extends React.Component {
     return user;
   }
 
+  componentDidMount() {
+    fetch(API.GET_ALL_PROVINCE, {method: 'GET'})
+    .then(async (response) => {
+      if (response.status === 200) {
+        let body = await JSON.parse(response._bodyInit);
+        let provinces = await body.data;
+        this.setState({provinces: provinces, loading: false});
+      }
+    }).catch((error) => {
+      Alert.alert('Thông báo', 'Hệ thống xãy ra lỗi. Vui lòng thử lại sau');
+      console.error(error);
+    });
+    
+  }
+
   _pressConfirm() {
     const {navigate} = this.props.navigation;
+    console.log(this.state.otherAddress);
     navigate('ConfirmOrderScreen');
   }
 
   _setVisibleModal(isVisible, type) {
     switch (type) {
       case 'province' : this.setState({modalProvinceVisible : isVisible}); break;
+
       case 'district' : this.setState({modalDistrictVisible : isVisible}); break;
       case 'ward' : this.setState({modalWardVisible : isVisible}); break;
     }
@@ -183,10 +217,12 @@ export default class ShippingAddressScreen extends React.Component {
       case 'province' : {
         let list = this.state.provinces;
         let districts = this.state.districts.init;
+        console.log(value);
         let item = list.find(function(item) {
-          return item.itemCode == value;
+          return item.itemCode === value;
         });
-        this.state.user.province = item;
+        console.log(item);
+        this.state.otherAddress.province = item;
         this.state.modalProvinceVisible = false;
         this.state.districts.search = districts.filter(item => item.provinceCode == value 
           || item.provinceCode == '00');
@@ -219,6 +255,9 @@ export default class ShippingAddressScreen extends React.Component {
   }
   
   render() {
+    if (this.state.loading) {
+      return <Loading message={this.state.errorLoading} navigation={this.props.navigation}/>
+    }
     const user = this.state.user;
     const provinces = this.state.provinces;
     const districts = this.state.districts.search;
