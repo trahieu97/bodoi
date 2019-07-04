@@ -1,6 +1,8 @@
 import React from 'react';
-import { Text, StyleSheet, AsyncStorage, TouchableHighlight, View} from 'react-native';
+import socketIO from 'socket.io-client';
+import { Text, StyleSheet, AsyncStorage, TouchableHighlight, View, Alert} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import API from '../../../constants/Api';
 import { GREEN } from '../../../commons/ColorCommon';
 
 export default class HeaderFunctionButtonModule extends React.Component {
@@ -12,21 +14,50 @@ export default class HeaderFunctionButtonModule extends React.Component {
     this.state = {
       cartCount: 0
     }
-    this.getCartCount = async () => {
-      try {
-        let cartForm = JSON.parse(await AsyncStorage.getItem("cart"));
-        if (cartForm) {
-          this.setState({cartCount: cartForm.length});
-        }
-      } catch (error) {
-        console.log('Error: ' + error);
-      }
-    };
     this._onPressButton = this._onPressButton.bind(this);
   }
   
   _onPressButton() {
     this.props.onPressButton(this.props.type);
+  }
+
+  componentDidMount() {
+    const carts = ['cart', 'detail-cart'];
+    if (carts.indexOf(this.props.type) === -1) 
+      return;
+    let token = 'hieutt30';
+    console.log((this.state.cartCount === 0))
+    if (this.state.cartCount === 0) {
+      fetch(API.GET_CART_TOTAL, {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            token: 'dkjflkewfleflewlfijewifjiweof'
+        }),
+      })
+      .then(async (response) => {
+          if (response.status === 200) {
+              let body = JSON.parse(response._bodyInit);
+              let total =  body.data;
+              console.log(body)
+              if (total)
+                this.setState({cartCount: total})
+          }
+      }).catch((error) => {
+          Alert.alert('Thông báo', 'Không thể truy xuất giỏ hàng');
+      });
+    }
+    let socket = socketIO('http://127.0.0.1:3000', {
+      transports: ['websocket'], 
+      jsonp: false 
+    });
+    socket.connect();
+    socket.on(token, (response) => 
+      this.setState({cartCount: response.total})
+    );
   }
 
   render() {

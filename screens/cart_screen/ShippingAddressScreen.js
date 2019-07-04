@@ -64,7 +64,11 @@ export default class ShippingAddressScreen extends React.Component {
     this._pressConfirm = this._pressConfirm.bind(this);
     this._setVisibleModal = this._setVisibleModal.bind(this);
     this.state = {
-      otherAddress: {
+      user: this.getUser(),
+      promotionCode: this.props.navigation.state.params.promotionCode,
+      shippingInfo: {
+        name: null,
+        phone: null,
         province: {
           itemCode : '',
           itemValue : 'Tỉnh/Thành phố'
@@ -77,81 +81,15 @@ export default class ShippingAddressScreen extends React.Component {
           itemCode : '',
           itemValue :'Xã/Phường'
         },
-        address: ''
+        address: '',
+        note: null
       },
       radioButtonDefault: true,
       loading: true,
       note: '',
-      provinces: [
-        { 
-          itemCode : '00',
-          itemValue: 'Tỉnh/Thành phố'
-        },
-        { 
-          itemCode : '01',
-          itemValue: 'Quảng Nam'
-        },
-        {
-          itemCode : '02',
-          itemValue : 'Đà Nẵng'
-        }
-      ],
-      districts: {
-        init: [
-          {
-            itemCode: '00000',
-            itemValue: 'Quận/Huyện',
-            provinceCode: '00'
-          }, 
-          {
-            itemCode: '01001',
-            itemValue: 'Thăng Bình',
-            provinceCode: '01'
-          },  
-          {
-            itemCode: '01002',
-            itemValue: 'Đại Lộc',
-            provinceCode: '01'
-          },  
-          {
-            itemCode: '02001',
-            itemValue: 'Hải Châu',
-            provinceCode: '02'
-          }
-        ],
-        search: [{
-          itemCode : '',
-          itemValue :'Quận/Huyện'
-        }]
-      },
-      wards: {
-        init: [
-          {
-            itemCode: '000000000',
-            itemValue: 'Xã/Phường',
-            districtCode: '00000'
-          },
-          {
-            itemCode: '010010001',
-            itemValue: 'Bình Định Bắc',
-            districtCode: '01001'
-          },  
-          {
-            itemCode: '01001002',
-            itemValue: 'Bình Định Nam',
-            districtCode: '01001'
-          },
-          {
-            itemCode: '02001001',
-            itemValue: 'Thanh Bình',
-            districtCode: '02002'
-          }
-        ],
-        search: [{
-          itemCode : '',
-          itemValue :'Xã/Phường'
-        }]
-      },
+      provinces: [],
+      districts: [],
+      wards: [],
       modalProvinceVisible: false,
       modalDistrictVisible: false,
       modalWardVisible: false
@@ -163,21 +101,20 @@ export default class ShippingAddressScreen extends React.Component {
       name: 'Hoàng Anh Tuấn',
       phone: '0123456789',
       storeName: 'Kem Xoi chu Bo Doi',
-      address: '123 Điện Biên Phủ, Thanh Khê, Đà Nẵng',
       avatar: '',
       province: {
-        itemCode : '',
-        itemValue : 'Tỉnh/Thành phố'
+        itemCode : '48',
+        itemValue : 'Thành phố Đà Nẵng'
       },
       district: {
-        itemCode : '',
-        itemValue : 'Quận/Huyện'
+        itemCode : '491',
+        itemValue : 'Quận Thanh Khê'
       },
       ward: {
-        itemCode : '',
-        itemValue :'Xã/Phường'
+        itemCode : '45011',
+        itemValue :'Phường Thanh Khê Tây'
       },
-      address: ''
+      address: '123 Điện Biên Phủ'
     };
     return user;
   }
@@ -199,14 +136,25 @@ export default class ShippingAddressScreen extends React.Component {
 
   _pressConfirm() {
     const {navigate} = this.props.navigation;
-    console.log(this.state.otherAddress);
-    navigate('ConfirmOrderScreen');
+    if (this.state.radioButtonDefault) {
+      this.state.shippingInfo.name = this.state.user.name;
+      this.state.shippingInfo.phone = this.state.user.phone;
+      this.state.shippingInfo.province = this.state.user.province;
+      this.state.shippingInfo.district = this.state.user.district;
+      this.state.shippingInfo.ward = this.state.user.ward;
+      this.state.shippingInfo.address = this.state.user.address;
+      this.setState(this.state);
+    }
+    let data = {
+      promotionCode: this.state.promotionCode,
+      shippingInfo: this.state.shippingInfo
+    };
+    navigate('ConfirmOrderScreen', data);
   }
 
   _setVisibleModal(isVisible, type) {
     switch (type) {
       case 'province' : this.setState({modalProvinceVisible : isVisible}); break;
-
       case 'district' : this.setState({modalDistrictVisible : isVisible}); break;
       case 'ward' : this.setState({modalWardVisible : isVisible}); break;
     }
@@ -215,39 +163,54 @@ export default class ShippingAddressScreen extends React.Component {
   _handleChangeComboBox(value, type) {
     switch (type) {
       case 'province' : {
-        let list = this.state.provinces;
-        let districts = this.state.districts.init;
-        console.log(value);
-        let item = list.find(function(item) {
-          return item.itemCode === value;
+        // Get districts by province
+        this.setState({loading: true});
+        fetch(`${API.GET_DISTRICT}/${value}`, {method: 'GET'})
+        .then(async (response) => {
+          if (response.status === 200) {
+            let list = this.state.provinces;
+            let item = list.find(function(item) {
+              return item.itemCode === value;
+            });
+            this.state.shippingInfo.province = item;
+            this.state.modalProvinceVisible = false;
+            let body = await JSON.parse(response._bodyInit);
+            let districts = await body.data;
+            this.setState({districts: districts, loading: false});
+            this.state.shippingInfo.district.itemValue = 'Quận/Huyện';
+            await this.setState(this.state);
+          }
+        }).catch((error) => {
+          Alert.alert('Thông báo', 'Thông thể tìm thấy danh sách các huyện');
+          console.error(error);
         });
-        console.log(item);
-        this.state.otherAddress.province = item;
-        this.state.modalProvinceVisible = false;
-        this.state.districts.search = districts.filter(item => item.provinceCode == value 
-          || item.provinceCode == '00');
-        this.state.user.district.itemValue = 'Quận/Huyện';
-        this.setState(this.state);
       } break;
       case 'district' : {
-        let list = this.state.districts.search;
-        let wards = this.state.wards.init;
-        let item = list.find(function(item) {
-          return item.itemCode == value;
+        // Get ward by district
+        this.setState({loading: true});
+        fetch(`${API.GET_WARD}/${this.state.shippingInfo.province.itemCode}/${value}`, {method: 'GET'})
+        .then(async (response) => {
+          if (response.status === 200) {
+            let list = this.state.districts;
+            console.log(value);
+            let item = list.find((item) => item.itemCode === value);
+            this.state.shippingInfo.district = item;
+            this.state.modalDistrictVisible = false;
+            let body = await JSON.parse(response._bodyInit);
+            let wards = await body.data;
+            this.setState({wards: wards, loading: false});
+            this.state.shippingInfo.ward.itemValue = 'Xã/Phường';
+            await this.setState(this.state);
+          }
+        }).catch((error) => {
+          Alert.alert('Thông báo', 'Không thể tìm thấy danh sách các xã');
+          console.error(error);
         });
-        this.state.user.district = item;
-        this.state.modalDistrictVisible = false;
-        this.state.wards.search = wards.filter(item => item.districtCode == value 
-          || item.districtCode == '00000');
-        this.state.user.ward.itemValue = 'Xã/Phường';
-        this.setState(this.state);
       } break;
       case 'ward' : {
-        let list = this.state.wards.search;
-        let item = list.find(function(item) {
-          return item.itemCode == value;
-        });
-        this.state.user.ward = item;
+        let list = this.state.wards;
+        let item = list.find((item) => item.itemCode == value);
+        this.state.shippingInfo.ward = item;
         this.state.modalWardVisible = false;
         this.setState(this.state);
       } break;
@@ -260,8 +223,8 @@ export default class ShippingAddressScreen extends React.Component {
     }
     const user = this.state.user;
     const provinces = this.state.provinces;
-    const districts = this.state.districts.search;
-    const wards = this.state.wards.search;
+    const districts = this.state.districts;
+    const wards = this.state.wards;
     return (
       <ScrollView style={UpdateInfoScreenStyles.container}>
         <StatusBar barStyle='default'/>
@@ -283,18 +246,18 @@ export default class ShippingAddressScreen extends React.Component {
                 <Title name='Thông tin nhận hàng:' />
                 <View style={{paddingBottom: 16}}>
                     <TextInput style={UpdateInfoScreenStyles.input} placeholder="Họ tên"
-                    onChangeText={(value) => { this.state.user.name = value; this.setState(this.state)}} 
-                    value={this.state.user.name}
+                    onChangeText={(value) => { this.state.shippingInfo.name = value; this.setState(this.state)}} 
+                    value={this.state.shippingInfo.name}
                     />
                     <TextInput style={UpdateInfoScreenStyles.input} placeholder="Số điện thoại"
-                    onChangeText={(value) => { this.state.user.phone = value; this.setState(this.state)}} 
-                    value={this.state.user.phone}
+                    onChangeText={(value) => { this.state.shippingInfo.phone = value; this.setState(this.state)}} 
+                    value={this.state.shippingInfo.phone}
                     />
                     <TouchableHighlight style={UpdateInfoScreenStyles.combobox}
                         onPress={() => this._setVisibleModal(true, 'province')} underlayColor="transparent">
                         <View>
                         <Text style={UpdateInfoScreenStyles.comboboxContent}>
-                            {this.state.user.province.itemValue}
+                            {this.state.shippingInfo.province.itemValue}
                         </Text>
                         <Icon name="menu-down" style={UpdateInfoScreenStyles.comboboxIcon} size={24} />
                         </View>
@@ -303,7 +266,7 @@ export default class ShippingAddressScreen extends React.Component {
                         onPress={() => this._setVisibleModal(true, 'district')} underlayColor="transparent">
                         <View>
                         <Text style={UpdateInfoScreenStyles.comboboxContent}>
-                            {this.state.user.district.itemValue}
+                            {this.state.shippingInfo.district.itemValue}
                         </Text>
                         <Icon name="menu-down" style={UpdateInfoScreenStyles.comboboxIcon} size={24} />
                         </View>
@@ -312,7 +275,7 @@ export default class ShippingAddressScreen extends React.Component {
                         onPress={() => this._setVisibleModal(true, 'ward')} underlayColor="transparent">
                         <View>
                         <Text style={UpdateInfoScreenStyles.comboboxContent}>
-                            {this.state.user.ward.itemValue}
+                            {this.state.shippingInfo.ward.itemValue}
                         </Text>
                         <Icon name="menu-down" style={UpdateInfoScreenStyles.comboboxIcon} size={24} />
                         </View>
@@ -321,32 +284,32 @@ export default class ShippingAddressScreen extends React.Component {
                             onValueChange={(value, index) => {
                             this._handleChangeComboBox(value, 'province');
                             }}
-                            selectedValue={this.state.user.province.itemCode} 
+                            selectedValue={this.state.shippingInfo.province.itemCode} 
                             isVisible={this.state.modalProvinceVisible} />
                     {(districts != null) ? (
                     <ComboBoxModal itemList={districts} 
                         onValueChange={(value, index) => {
                         this._handleChangeComboBox(value, 'district');
                         }}
-                        selectedValue={this.state.user.district.itemCode} 
+                        selectedValue={this.state.shippingInfo.district.itemCode} 
                         isVisible={this.state.modalDistrictVisible} />) : null }
                     {(wards != null) ? (
                     <ComboBoxModal itemList={wards} 
                         onValueChange={(value, index) => {
                         this._handleChangeComboBox(value, 'ward');
                         }}
-                        selectedValue={this.state.user.ward.itemCode} 
+                        selectedValue={this.state.shippingInfo.ward.itemCode} 
                         isVisible={this.state.modalWardVisible} />) : null }
                     <TextInput style={UpdateInfoScreenStyles.input} placeholder="Địa chỉ"
-                        onChangeText={(value) => { this.state.user.address = value; this.setState(this.state)}} 
-                        value={this.state.user.address}
+                        onChangeText={(value) => { this.state.shippingInfo.address = value; this.setState(this.state)}} 
+                        value={this.state.shippingInfo.address}
                         />
                 </View>
             </View> : null }
             <Text>Ghi chú: </Text>
             <TextInput multiline={true} maxLength={100} style={{height: 86, marginTop: 3, paddingLeft: 8, borderWidth: 0.5, borderColor: GREEN}}
-                  onChangeText={(value) => {this.state.note = value; this.setState(this.state)}}
-                  value={this.state.note}/>
+                  onChangeText={(value) => {this.state.shippingInfo.note = value; this.setState(this.state)}}
+                  value={this.state.shippingInfo.note}/>
             <TouchableHighlight style={UpdateInfoScreenStyles.button}
                 onPress={this._pressConfirm} underlayColor="transparent">
                 <Text style={{color: '#FFFFFF'}}>Tiếp tục</Text>

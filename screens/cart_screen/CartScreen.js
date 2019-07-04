@@ -6,7 +6,7 @@ import Loading from '../../components/Loading';
 import { HEADER_TOP_BAR_HEIGHT, DEVICE_WIDTH } from '../../commons/LayoutCommon';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { PRICE_COLOR, GREEN, BG_COLOR_GRAY, BG_COLOR_WHITE } from '../../commons/ColorCommon';
-import API from '../../constants/Api'; 
+import API from '../../constants/Api';
 
 const OrderItem = ({item, onPressDelete, onPressPlus, onPressDiv}) => {
     let total = item.product.salePrice * item.quantity;
@@ -70,6 +70,8 @@ export default class CartScreen extends React.Component {
         super(props);
         this.state = {
             cartList: [],
+            promotionCode: null,
+            promotionSaleOff: 0,
             totalSum: 0,
             loading: true,
             errorLoading: null
@@ -145,6 +147,7 @@ export default class CartScreen extends React.Component {
         this._removeCartItem = this._removeCartItem.bind(this);
         this._divCartItem = this._divCartItem.bind(this);
         this._plusCartItem = this._plusCartItem.bind(this);
+        this._onApplyPromotionCode = this._onApplyPromotionCode.bind(this);
     }
 
     setEmptyCartMessage() {
@@ -158,6 +161,12 @@ export default class CartScreen extends React.Component {
         this.updateCartList();
         if (this.state.cartList.length <= 0) {
             this.setEmptyCartMessage();
+        }
+
+        if (this.state.promotionSaleOff > 0 &&
+            (this.state.promotionCode !== null ||
+            this.state.promotionCode !== '')) {
+            this._onApplyPromotionCode();
         }
     }
 
@@ -183,6 +192,49 @@ export default class CartScreen extends React.Component {
             this.setState({cartList: cartList});
             this.updateCartList();
         }
+        if (this.state.promotionSaleOff > 0 &&
+            (this.state.promotionCode !== null ||
+            this.state.promotionCode !== '')) {
+            this._onApplyPromotionCode();
+        }
+    }
+
+    _onApplyPromotionCode() {
+        if (this.state.promotionCode === null ||
+            this.state.promotionCode === '') {
+            Alert.alert('Thông báo', 'Bạn chưa nhập mã giảm giá');
+            return;
+        }
+        fetch(API.CHECK_PROMOTION_CODE, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                token: 'dkjflkewfleflewlfijewifjiweof',
+                promotion_code: this.state.promotionCode
+            }),
+        })
+        .then(async (response) => {
+            if (response.status === 200) {
+                let body = JSON.parse(response._bodyInit);
+                let data =  body.data;
+                if (data.promotion_code !== this.state.promotionCode) {
+                    Alert.alert('Thông báo', 'Có lỗi xãy ra. Vui lòng thử lại sau')
+                    return;
+                }
+                let promotionSaleOff = this.state.promotionSaleOff;
+                promotionSaleOff = (this.state.totalSum * data.percent/100)
+                this.setState({promotionSaleOff})
+            } else {
+                Alert.alert('Thông báo', 'Mã giảm giá không hợp lệ');
+                this.setState({promotionSaleOff: 0})
+            }
+        }).catch((error) => {
+            Alert.alert('Thông báo', 'Có lỗi khuy truy xuất giỏ hàng');
+            console.error(error);
+        });
     }
 
     componentDidMount() {
@@ -190,7 +242,15 @@ export default class CartScreen extends React.Component {
     }
 
     _onPressToCheckout() {
-        this.props.navigation.navigate('ShippingAddressScreen');
+        console.log(this.state.promotionCode)
+        if (this.state.promotionCode !== null ||
+            this.state.promotionCode !== '') {
+            this.setState({promotionCode: null});
+        }
+        let data = {
+            promotionCode: this.state.promotionCode
+        }
+        this.props.navigation.navigate('ShippingAddressScreen', data);
     }
 
     render() {
@@ -219,9 +279,12 @@ export default class CartScreen extends React.Component {
                 <View style={{position: 'relative', width: DEVICE_WIDTH, height: 150, bottom: 0, backgroundColor: '#fff', borderTopWidth: 0.5, borderTopColor: BG_COLOR_GRAY}}>
                     <View style={{width: DEVICE_WIDTH, alignItems: 'center', paddingTop: 16, paddingBottom: 16, paddingLeft: 24, paddingRight: 24}}>
                         <View style={{flexDirection: 'row'}}>
-                            <TextInput style={{width: 180, height: 40, borderWidth: 0.5, marginRight: 8, borderColor: GREEN, paddingLeft: 8}}/>
+                            <TextInput style={{width: 180, height: 40, borderWidth: 0.5, marginRight: 8, borderColor: GREEN, paddingLeft: 8}}
+                                onChangeText={(value) => { this.setState({promotionCode: value})}} 
+                            />
                             <TouchableHighlight style={{height: 40, width: 90, marginLeft: 8, backgroundColor: '#056839', 
                                 justifyContent: 'center', alignItems: 'center'}} 
+                                onPress={() => this._onApplyPromotionCode()}
                                 underlayColor="transparent">
                                 <Text style={{color: '#fff'}}>Áp dụng</Text>
                             </TouchableHighlight>
@@ -231,8 +294,17 @@ export default class CartScreen extends React.Component {
                                 <Text>Tạm tính: </Text>
                                 <Text style={UserOrderScreenStyles.price}>
                                     <Text style={UserOrderScreenStyles.boldDisplay}>
-                                        {this.state.totalSum.toLocaleString('vi')}
+                                        {(this.state.totalSum - this.state.promotionSaleOff).toLocaleString('vi')}
                                     </Text>đ
+                                    {(this.state.promotionSaleOff > 0) ?
+                                    <Text style={{color: 'black'}}>
+                                        &nbsp;(<Text style={{color: GREEN}}>
+                                            -<Text style={UserOrderScreenStyles.boldDisplay}>
+                                                {this.state.promotionSaleOff.toLocaleString('vi')}
+                                            </Text>đ
+                                        </Text>)
+                                    </Text> : null
+                                    }
                                 </Text>
                             </View>
                         </View>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View, Text, AsyncStorage, StatusBar, TouchableHighlight} from 'react-native';
+import { ScrollView, StyleSheet, View, Text, Alert, StatusBar, TouchableHighlight} from 'react-native';
 // import ImagesCarousel from '../components/modules/product/DetailImageScroll';
 
 import { HEADER_TOP_BAR_HEIGHT, DEVICE_WIDTH } from '../../commons/LayoutCommon';
@@ -75,7 +75,10 @@ export default class ConfirmOrderScreen extends React.Component {
         this._pressUpdate = this._pressUpdate.bind(this);
         this.state = {
             user: this.getUser(),
+            shippingInfo: this.props.navigation.state.params.shippingInfo,
+            promotionCode: this.props.navigation.state.params.promotionCode,
             cartList: [],
+            promotionSaleOff: 0,
             loading: true,
             errorLoading: null,
             totalSum: 0,
@@ -128,6 +131,7 @@ export default class ConfirmOrderScreen extends React.Component {
 
         this._pressPaymentMethod = this._pressPaymentMethod.bind(this);
         this._executeOrder = this._executeOrder.bind(this);
+        this._onApplyPromotionCode = this._onApplyPromotionCode.bind(this);
     }
 
     getUser() {
@@ -159,8 +163,42 @@ export default class ConfirmOrderScreen extends React.Component {
         return current === method;
     }
 
+    componentWillMount() {
+        this._onApplyPromotionCode();
+    }
+
     componentDidMount() {
         this.getCartList();
+    }
+
+    _onApplyPromotionCode() {
+        fetch(API.CHECK_PROMOTION_CODE, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                token: 'dkjflkewfleflewlfijewifjiweof',
+                promotion_code: this.state.promotionCode
+            }),
+        })
+        .then(async (response) => {
+            if (response.status === 200) {
+                let body = JSON.parse(response._bodyInit);
+                let data =  body.data;
+                if (data.promotion_code !== this.state.promotionCode) {
+                    return;
+                }
+                let promotionSaleOff = this.state.promotionSaleOff;
+                promotionSaleOff = (this.state.totalSum * data.percent/100)
+                this.setState({promotionSaleOff})
+            } else {
+                this.setState({promotionSaleOff: 0})
+            }
+        }).catch(() => {
+            this.setState({promotionSaleOff: 0})
+        });
     }
 
     _executeOrder() {
@@ -194,6 +232,7 @@ export default class ConfirmOrderScreen extends React.Component {
         const itemCartRender = [];
         const user = this.state.user;
         const cartList = this.state.cartList;
+        console.log(this.state.promotionCode !== null)
     
         cartList.map((item, i) => {
             itemCartRender.push(<ItemRow key={i} item={item} />);
@@ -205,25 +244,29 @@ export default class ConfirmOrderScreen extends React.Component {
                 <View>
                     {itemCartRender}
                 </View>
-                <Title name='Giao đến: ' />
-                <View style={ConfirmOrderStyles.borderDefault}>
-                    <Label label='Anh/Chị' value='Hoàng Anh Tuấn' />
-                    <Label label='Điện thoại' value='0123456789' />
-                    <Label label='Tên quán' value='Kem xôi Chú Bộ Đội' />
-                    <Label label='Địa chỉ' value='123 Lý Tự Trọng, Q.Hải Châu, TP. Đà Nẵng' />
-                    <Label label='Ghi chú' value='1fwehffhksdkfhwkghkrhksehkghwerkhgiohiohsdh ưhihwio hio giơhiog hiohgo ioghio hewrigrger' />
-                </View>
                 <View style={ConfirmOrderStyles.row}>
-                    <Text style={ConfirmOrderStyles.title}>Mã giảm giá: </Text>
-                    <Text style={ConfirmOrderStyles.promotionCode}>ABCXYZ</Text>
+                    <Text style={ConfirmOrderStyles.title}>Tổng tiền: </Text>
                     <Text>
-                        (<Text style={ConfirmOrderStyles.price}>
+                        <Text style={ConfirmOrderStyles.price}>
                             <Text style={ConfirmOrderStyles.boldDisplay}>
-                                -{(128000).toLocaleString('vi')}
+                                {(this.state.totalSum - this.state.promotionSaleOff).toLocaleString('vi')}
                             </Text>đ
-                        </Text>)
+                        </Text>
                     </Text>
                 </View>
+                {(this.state.promotionCode !== null) ?
+                    (<View style={ConfirmOrderStyles.row}>
+                        <Text style={ConfirmOrderStyles.title}>Mã giảm giá: </Text>
+                        <Text style={ConfirmOrderStyles.promotionCode}>{this.state.promotionCode}</Text>
+                        <Text>
+                            (<Text style={ConfirmOrderStyles.price}>
+                                <Text style={ConfirmOrderStyles.boldDisplay}>
+                                    -{(this.state.promotionSaleOff).toLocaleString('vi')}
+                                </Text>đ
+                            </Text>)
+                        </Text>
+                    </View>) : null
+                }
                 <View style={ConfirmOrderStyles.row}>
                     <Text style={ConfirmOrderStyles.title}>Số điểm hiện có: </Text>
                     <Text style={ConfirmOrderStyles.currentPoint}>123 </Text>
@@ -238,6 +281,19 @@ export default class ConfirmOrderScreen extends React.Component {
                         onPress={() => alert('Ok')} underlayColor="transparent">
                         <Text style={{color: LINK, textDecorationLine: 'underline'}}> sử dụng</Text>
                     </TouchableHighlight>
+                </View>
+                <View style={ConfirmOrderStyles.row}>
+                    <Title name='Giao đến: ' />
+                </View>
+                <View style={ConfirmOrderStyles.row}>
+                    <View style={ConfirmOrderStyles.borderDefault}>
+                        <Label label='Anh/Chị' value={this.state.shippingInfo.name} />
+                        <Label label='Điện thoại' value={this.state.shippingInfo.phone} />
+                        <Label label='Địa chỉ' value={`${this.state.shippingInfo.address}, ${this.state.shippingInfo.ward.itemValue}` + 
+                                                        `, ${this.state.shippingInfo.district.itemValue}, ${this.state.shippingInfo.province.itemValue}`
+                                                    } />
+                        <Label label='Ghi chú' value={this.state.shippingInfo.note} />
+                    </View>
                 </View>
                 <View style={ConfirmOrderStyles.row}>
                     <Text style={ConfirmOrderStyles.title}>Phí ship: </Text>
