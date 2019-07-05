@@ -9,5 +9,7 @@ export default {
     GET_ALL_PROVINCE: HOST + '/api/address/get_all_provincial',
     GET_DISTRICT: HOST + '/api/address/get_district',
     GET_WARD: HOST + '/api/address/get_ward',
-    CHECK_PROMOTION_CODE: HOST + '/api/promotion_code/check_promotion_code'
+    CHECK_PROMOTION_CODE: HOST + '/api/promotion_code/check_promotion_code',
+    GET_ALL_ORDER: HOST + '/api/order/get_all',
+    CREATE_ORDER: HOST + '/api/order/create'
 };

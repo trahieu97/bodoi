@@ -15,6 +15,7 @@ export default class UserScreen extends React.Component {
     super(props);
     this.state = {text: 1};
     this._pressFunction = this._pressFunction.bind(this);
+    this._headerTopButtonClick = this._headerTopButtonClick.bind(this);
   }
 
   _increaseCount = () => {
@@ -33,6 +34,14 @@ export default class UserScreen extends React.Component {
     }
   }
 
+  _headerTopButtonClick(type) {
+    const {navigate} = this.props.navigation;
+    switch(type) {
+      case 'cart' : navigate('CartScreen'); break;
+      default: null;
+    }
+  }
+
   render() {
     const user = {
       name: 'Hoàng Anh Tuấn',
@@ -46,7 +55,7 @@ export default class UserScreen extends React.Component {
     };
     return (
       <View>
-        <HeaderTopBar type="normal" title="Tài khoản"/>
+        <HeaderTopBar type="normal" title="Tài khoản" onClickTopFunctionButton={this._headerTopButtonClick} />
         <View style={{marginTop: HEADER_TOP_BAR_HEIGHT, flexDirection: 'row', alignItems: 'center',
           backgroundColor: TITLE_BAR_COLOR, height: 100, borderBottomRightRadius: 8, borderBottomLeftRadius: 8,
           zIndex: 1

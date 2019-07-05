@@ -1,13 +1,13 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View, Text,
   Modal, TextInput, StatusBar, TouchableHighlight, Picker, KeyboardAvoidingView, Alert} from 'react-native';
-  import Loading from '../../components/Loading';
 // import ImagesCarousel from '../components/modules/product/DetailImageScroll';
 
 import { HEADER_TOP_BAR_HEIGHT, DEVICE_WIDTH } from '../../commons/LayoutCommon';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BG_COLOR_GRAY, GREEN } from '../../commons/ColorCommon';
-import API from '../../constants/Api'; 
+import API from '../../constants/Api';
+import Loading from '../../components/Loading';
 
 const Title = ({name}) => (
   <Text style={{fontWeight: 'bold', textDecorationLine: 'underline', paddingBottom: 8, paddingTop: 8}}>{name}</Text>
@@ -314,6 +314,7 @@ export default class ShippingAddressScreen extends React.Component {
                 onPress={this._pressConfirm} underlayColor="transparent">
                 <Text style={{color: '#FFFFFF'}}>Tiếp tục</Text>
             </TouchableHighlight>
+            <View style={{marginBottom: 50}}></View>
         </KeyboardAvoidingView>
       </ScrollView>
     );
@@ -344,6 +345,7 @@ const UpdateInfoScreenStyles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#fff',
+    paddingBottom: 32,
   },
   borderDefault: {
       borderWidth: 0.5,

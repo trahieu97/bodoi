@@ -66,9 +66,9 @@ const ItemRow = ({item}) => (
 );
 
 export default class ConfirmOrderScreen extends React.Component {
-  static navigationOptions = {
-    title: 'Xác nhận đơn hàng'
-  };
+    static navigationOptions = {
+        title: 'Xác nhận đơn hàng'
+    };
 
     constructor(props) {
         super(props);
@@ -198,31 +198,42 @@ export default class ConfirmOrderScreen extends React.Component {
             }
         }).catch(() => {
             this.setState({promotionSaleOff: 0})
-        });
+        }); 
     }
 
     _executeOrder() {
         // listCartItem = 
-
-        fetch('http://app-tratanhieu.herokuapp.com/order/create', {
+        this.setState({loading: true});
+        fetch(API.CREATE_ORDER, {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                firstParam: 'yourValue',
-                secondParam: 'yourOtherValue',
+                token: 'ksdhfksf',
+                promotionCode: this.state.promotionCode,
+                shippingInfo: this.state.shippingInfo,
+
             }),
         })
-        .then((response) => alert('Đặt hành thành công'))
+        .then(async (response) => {
+            if (response.status === 200) {
+                this.setState({loading: false});
+                await Alert.alert('Thông báo', 'Đặt hành thành công');
+                const {navigate} = await this.props.navigation;
+                await navigate('UsersOrdersScreen');
+            } else {
+                await Alert.alert('Thông báo', 'Đặt hàng không thành công. Vui lòng thử lại.');
+                console.log(response)
+                this.setState({loading: false});
+            }
+        })
         .catch((error) => {
+            Alert.alert('Thông báo', 'Đặt hàng không thành công. Vui lòng thử lại.');
+            this.setState({loading: false});
             console.error(error);
         });
-        
-
-        const {navigate} = this.props.navigation;
-        navigate('UsersOrdersScreen');
     }
 
     render() {
@@ -249,7 +260,7 @@ export default class ConfirmOrderScreen extends React.Component {
                     <Text>
                         <Text style={ConfirmOrderStyles.price}>
                             <Text style={ConfirmOrderStyles.boldDisplay}>
-                                {(this.state.totalSum - this.state.promotionSaleOff).toLocaleString('vi')}
+                                {(this.state.totalSum).toLocaleString('vi')}
                             </Text>đ
                         </Text>
                     </Text>

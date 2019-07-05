@@ -32,6 +32,7 @@ export default class HomeScreen extends React.Component {
     this._categoryPress = this._categoryPress.bind(this);
     this._requestProductPress = this._requestProductPress.bind(this);
     this._detailProductPress = this._detailProductPress.bind(this);
+    this._headerTopButtonClick = this._headerTopButtonClick.bind(this);
     const {navigate} = this.props.navigation;
   }
 
@@ -40,6 +41,14 @@ export default class HomeScreen extends React.Component {
   };
 
   _categoryPress(type) {
+    const {navigate} = this.props.navigation;
+    switch(type) {
+      case 'cart' : navigate('CartScreen'); break;
+      default: null;
+    }
+  }
+
+  _headerTopButtonClick(type) {
     const {navigate} = this.props.navigation;
     switch(type) {
       case 'cart' : navigate('CartScreen'); break;
@@ -133,7 +142,7 @@ export default class HomeScreen extends React.Component {
 
     return (
       <View style={{backgroundColor: BG_COLOR_GRAY}}>
-        <HeaderTopBar navigation={this.props.navigation} type="home"/>
+        <HeaderTopBar navigation={this.props.navigation} type="home" onClickTopFunctionButton={this._headerTopButtonClick} />
         <ScrollView>
           <ImagesCarousel style={{zIndex: 0}} marginTop={HEADER_TOP_BAR_HEIGHT} images={images} />
           <CategoriesModule dataSource={categories} />

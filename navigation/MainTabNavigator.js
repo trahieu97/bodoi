@@ -66,6 +66,12 @@ HomeStack.navigationOptions = {
 // Create Promotion Stack
 const PromotionsStack = createStackNavigator({
   PromotionStack: PromotionsScreen,
+  CartScreen: {
+    screen: CartScreen,
+    navigationOptions: {
+      headerBackTitle: 'Quay lại'
+    }
+  }
 });
 
 PromotionsStack.navigationOptions = {
@@ -84,6 +90,12 @@ PromotionsStack.navigationOptions = {
 // Create Stores Stack
 const StoresStack = createStackNavigator({
   StoresStack: StoresScreen,
+  CartScreen: {
+    screen: CartScreen,
+    navigationOptions: {
+      headerBackTitle: 'Quay lại'
+    }
+  }
 });
 
 StoresStack.navigationOptions = {
@@ -105,7 +117,13 @@ const UserStack = createStackNavigator({
   UpdateInfoScreen: UpdateInfoScreen,
   ChangePasswordScreen: ChangePasswordScreen,
   RequestScreen: RequestScreen,
-  UsersOrdersScreen: UsersOrdersScreen
+  UsersOrdersScreen: UsersOrdersScreen,
+  CartScreen: {
+    screen: CartScreen,
+    navigationOptions: {
+      headerBackTitle: 'Quay lại'
+    }
+  }
 });
 
 

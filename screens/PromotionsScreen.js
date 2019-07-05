@@ -72,6 +72,7 @@ export default class PromotionsScreen extends React.Component {
     };
     this._detailProductPress = this._detailProductPress.bind(this);
     this._setVisibleModal = this._setVisibleModal.bind(this);
+    this._headerTopButtonClick = this._headerTopButtonClick.bind(this);
   }
 
   _detailProductPress(productId) {
@@ -88,6 +89,14 @@ export default class PromotionsScreen extends React.Component {
 
   _setVisibleModal(isVisible) {
     this.setState({filterModal : isVisible});
+  }
+
+  _headerTopButtonClick(type) {
+    const {navigate} = this.props.navigation;
+    switch(type) {
+      case 'cart' : navigate('CartScreen'); break;
+      default: null;
+    }
   }
 
   async componentDidMount() {
@@ -109,7 +118,7 @@ export default class PromotionsScreen extends React.Component {
     }
     return (
         <View style={PromotionsScreenStyles.contain}>
-          <HeaderTopBar type="normal" title="Khuyến mãi"/>
+          <HeaderTopBar type="normal" title="Khuyến mãi" onClickTopFunctionButton={this._headerTopButtonClick} />
           <View style={{top: HEADER_TOP_BAR_HEIGHT, marginBottom: HEADER_TOP_BAR_HEIGHT}}>
             <View style={PromotionsScreenStyles.filter}>
               <Text style={PromotionsScreenStyles.filterLabel}>Sắp xếp</Text>

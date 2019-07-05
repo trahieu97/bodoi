@@ -1,41 +1,56 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View, Text,
-  Modal, TextInput, StatusBar, TouchableHighlight, Picker} from 'react-native';
+    StatusBar, TouchableHighlight, Alert} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 // import ImagesCarousel from '../components/modules/product/DetailImageScroll';
 
-import { HEADER_TOP_BAR_HEIGHT, DEVICE_WIDTH } from '../../commons/LayoutCommon';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { DEVICE_WIDTH } from '../../commons/LayoutCommon';
 import { PRICE_COLOR, GREEN, BG_COLOR_GRAY, BG_COLOR_WHITE } from '../../commons/ColorCommon';
 
-const OrderItem = ({item, displayStatus}) => (
-    <View style={UserOrderScreenStyles.item}>
+import moment from 'moment';
+import API from '../../constants/Api';
+import Loading from '../../components/Loading';
+
+const OrderItem = ({index, item, displayStatus}) => (
+    <View style={(index%2 === 0) ? UserOrderScreenStyles.item : UserOrderScreenStyles.itemEven}>
         <View style={UserOrderScreenStyles.itemSpace}>
-            <Text style={UserOrderScreenStyles.boldDisplay}>Đơn hàng #{item.orderNo}</Text>
+            <Text style={UserOrderScreenStyles.boldDisplay}>Đơn hàng #BD{item.orderNo}</Text>
         </View>
         <View style={UserOrderScreenStyles.itemSpace}>
-            <Text>Ngày tạo: <Text style={UserOrderScreenStyles.boldDisplay}>{item.createDate}</Text></Text>
+            <Text>Ngày tạo:&nbsp;<Text style={UserOrderScreenStyles.boldDisplay}>{moment(item.createDate).format('HH:mm:ss - DD/MM/YYYY')}</Text></Text>
         </View>
         <View style={UserOrderScreenStyles.itemSpace}>
-            <Text>Tổng tiền:                      
+            <Text>Tổng tiền:&nbsp;                 
                 <Text style={UserOrderScreenStyles.price}>
-                    <Text style={UserOrderScreenStyles.boldDisplay}> {item.totalMoney.toLocaleString('vi')}
+                    <Text style={UserOrderScreenStyles.boldDisplay}> {item.paymentPrice.toLocaleString('vi')}
                     </Text>đ
                 </Text>
             </Text>
         </View>
         <View style={UserOrderScreenStyles.itemSpace}>
-            <Text>Trạng thái:
-                <Text style={
-                    (item.status == 'none') ? UserOrderScreenStyles.statusNone 
-                    : (item.status == 'inprocess') ? UserOrderScreenStyles.statusInprocess
-                    : (item.status == 'shipping') ? UserOrderScreenStyles.statusShipping
-                    : (item.status == 'done') ? UserOrderScreenStyles.statusSuccess
-                    : (item.status == 'cancel') ? UserOrderScreenStyles.statusCancel : null
-                }> {displayStatus[item.status]}</Text></Text>
+            <Text style={{lineHeight: 20}}>Trạng thái:&nbsp;</Text>
+                <View style={
+                    (item.status == 'PENDDING') ? UserOrderScreenStyles.statusNone 
+                    : (item.status == 'ACCEPTED') ? UserOrderScreenStyles.statusAccepted
+                    : (item.status == 'PREPARING') ? UserOrderScreenStyles.statusInprocess
+                    : (item.status == 'SHIPPING') ? UserOrderScreenStyles.statusShipping
+                    : (item.status == 'DONE') ? UserOrderScreenStyles.statusSuccess
+                    : (item.status == 'CANCEL') ? UserOrderScreenStyles.statusCancel : null
+                }><Text style={{color: '#fff', fontWeight: 'bold'}}>&nbsp;{displayStatus[item.status]}&nbsp;</Text></View>
         </View>
-        <TouchableHighlight style={UserOrderScreenStyles.buttonDel}
+        <TouchableHighlight style={UserOrderScreenStyles.buttonRebuy}
             onPress={this._pressUpdate} underlayColor="transparent">
-            <Text style={{color: PRICE_COLOR, fontWeight: 'bold'}}>x</Text>
+            <Text style={{color: PRICE_COLOR, fontWeight: 'bold'}}>
+                <Icon name="reload"
+                    color="#337ab7" size={24}/>
+            </Text>
+        </TouchableHighlight>
+        <TouchableHighlight style={UserOrderScreenStyles.buttonCancel}
+            onPress={this._pressUpdate} underlayColor="transparent">
+            <Text style={{color: PRICE_COLOR, fontWeight: 'bold'}}>
+                <Icon name="close"
+                    color="red" size={24}/>
+            </Text>
         </TouchableHighlight>
     </View>
 );
@@ -44,85 +59,60 @@ export default class ChangePasswordScreen extends React.Component {
     static navigationOptions = {
         title: 'Đơn hàng của bạn'
     };
-  
+
     constructor(props) {
         super(props);
-        this._getOrderList = this._getOrderList.bind(this);
         this.state = {
-            orderList: this._getOrderList()
+            orderList: [],
+            loading: true
         };
     }
 
-    _getOrderList() {
-        let orderList = [
-            {
-                orderNo: '473978937548976',
-                createDate: '22/11/2018',
-                totalMoney: 30000,
-                point: 8,
-                status: 'done'
+    componentDidMount() {
+        fetch(API.GET_ALL_ORDER, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
             },
-            {
-                orderNo: '#473978937548976',
-                createDate: '22/11/2018',
-                totalMoney: 30000,
-                point: 8,
-                status: 'inprocess'
-            },
-            {
-                orderNo: '#473978937548976',
-                createDate: '22/11/2018',
-                totalMoney: 30000,
-                point: 8,
-                status: 'cancel'
-            },
-            {
-                orderNo: '#473978937548976',
-                createDate: '22/11/2018',
-                totalMoney: 30000,
-                point: 8,
-                status: 'shipping'
-            },
-            {
-                orderNo: '#473978937548976',
-                createDate: '22/11/2018',
-                totalMoney: 30000,
-                point: 8,
-                status: 'none'
-            },
-            {
-                orderNo: '#473978937548976',
-                createDate: '22/11/2018',
-                totalMoney: 30000,
-                point: 8,
-                status: 'none'
-            },
-            {
-                orderNo: '#473978937548976',
-                createDate: '22/11/2018',
-                totalMoney: 30000,
-                point: 8,
-                status: 'none'
+            body: JSON.stringify({
+                token: 'dkjflkewfleflewlfijewifjiweof'
+            })
+        })
+        .then(async (response) => {
+            if (response.status === 200) {
+                let body = JSON.parse(response._bodyInit);
+                let data =  body.data;
+                this.setState({orderList: data, loading: false})
+            } else {
+                Alert.alert('Thông báo', 'Không thể truy xuất đơn hàng. Vui lòng thử lại sau');
+                this.setState({loading: false});
             }
-        ];
-        return orderList;
+        }).catch(() => {
+            Alert.alert('Thông báo', 'Không thể truy xuất đơn hàng. Vui lòng thử lại sau');
+            this.setState({loading: false});
+        }); 
     }
 
     render() {
+        if (this.state.loading) {
+            return <Loading message={this.state.errorLoading} navigation={this.props.navigation}/>
+        }
         const orderList = this.state.orderList;
         const displayStatus = {
-            'none' : 'Chưa xử lý',
-            'inprocess' : 'Đang xử lý',
-            'cancel' : 'Đã huỷ',
-            'shipping' : 'Đang giao hàng',
-            'done' : 'Đã hoàn thành'
+            'PENDDING' : 'Chưa tiếp nhận',
+            'ACCEPTED' : 'Đã tiếp nhận',
+            'PREPARING' : 'Đang xử lý',
+            'CANCEL' : 'Đã huỷ',
+            'SHIPPING' : 'Đang giao hàng',
+            'DONE' : 'Đã hoàn thành'
         };
         return (
             <View style={UserOrderScreenStyles.container}>
                 <StatusBar barStyle='default'/>
                 <ScrollView>
                     {orderList.map((item, i) => (
-                        <OrderItem key={i} item={item} displayStatus={displayStatus} />
+                        <OrderItem key={i} item={item} displayStatus={displayStatus} index={i} />
                     ))}
                 </ScrollView>
             </View>
@@ -132,28 +122,35 @@ export default class ChangePasswordScreen extends React.Component {
 
 const UserOrderScreenStyles = StyleSheet.create({
     container: {
-      width: DEVICE_WIDTH,
-      flex: 1,
-      padding: 8,
-      paddingBottom: 0,
-      backgroundColor: BG_COLOR_GRAY,
+        width: DEVICE_WIDTH,
+        flex: 1,
+        padding: 8,
+        paddingBottom: 0,
+        backgroundColor: BG_COLOR_GRAY,
     },
-    buttonDel: {
-      position: 'absolute',
-      height: 16, 
-      width: 16,
-      right: 8,
-      top: 8
+    buttonRebuy: {
+        position: 'absolute',
+        height: 24, 
+        width: 24,
+        right: 8,
+        top: 40
+    },
+    buttonCancel: {
+        position: 'absolute',
+        height: 24, 
+        width: 24,
+        right: 8,
+        top: 8
     },
     input: {
-      width: '100%',
-      alignSelf: 'center',
-      height: 40, 
-      marginTop: 8,
-      borderColor: GREEN, 
-      borderWidth: 0.5, 
-      paddingLeft: 8,
-      borderRadius: 8
+        width: '100%',
+        alignSelf: 'center',
+        height: 40, 
+        marginTop: 8,
+        borderColor: GREEN, 
+        borderWidth: 0.5, 
+        paddingLeft: 8,
+        borderRadius: 8
     },
     item: {
         width: '100%',
@@ -162,9 +159,21 @@ const UserOrderScreenStyles = StyleSheet.create({
         borderRadius: 8,
         borderWidth: 0.5,
         borderColor: BG_COLOR_GRAY,
-        backgroundColor: BG_COLOR_WHITE
+        backgroundColor: '#eee'
+    },
+    itemEven: {
+        width: '100%',
+        height: 'auto',
+        padding: 8,
+        borderRadius: 8,
+        borderWidth: 0.5,
+        borderColor: BG_COLOR_GRAY,
+        backgroundColor: '#f9f9f9'
     },
     itemSpace: {
+        flexDirection:'row',
+        flexWrap:'wrap',
+        height: 20,
         marginTop: 3,
         marginBottom: 3
     },
@@ -175,23 +184,63 @@ const UserOrderScreenStyles = StyleSheet.create({
         fontWeight: 'bold',
     },
     statusNone: {
-        color: PRICE_COLOR,
-        fontWeight: 'bold'
+        backgroundColor: PRICE_COLOR,
+        height: 20,
+        borderWidth: 0.5,
+        borderColor: '#fff',
+        paddingLeft: 3,
+        paddingRight: 3,
+        lineHeight: 20,
+        borderRadius: 8
     },
     statusInprocess: {
-        color: '#FAC917',
-        fontWeight: 'bold'
+        backgroundColor: '#f39c12',
+        height: 20,
+        borderWidth: 0.5,
+        borderColor: '#fff',
+        paddingLeft: 3,
+        paddingRight: 3,
+        lineHeight: 20,
+        borderRadius: 8
     },
     statusShipping: {
-        color: '#2680EB',
-        fontWeight: 'bold'
+        backgroundColor: '#2680EB',
+        height: 20,
+        borderWidth: 0.5,
+        borderColor: '#fff',
+        paddingLeft: 3,
+        paddingRight: 3,
+        lineHeight: 20,
+        borderRadius: 8
     },
     statusCancel: {
-        color: PRICE_COLOR,
-        fontWeight: 'bold'
+        backgroundColor: '#666',
+        height: 20,
+        borderWidth: 0.5,
+        borderColor: '#fff',
+        paddingLeft: 3,
+        paddingRight: 3,
+        lineHeight: 20,
+        borderRadius: 8
     },
     statusSuccess: {
-        color: '#1BC597',
-        fontWeight: 'bold'
+        backgroundColor: '#00a65a',
+        height: 20,
+        borderWidth: 0.5,
+        borderColor: '#fff',
+        paddingLeft: 3,
+        paddingRight: 3,
+        lineHeight: 20,
+        borderRadius: 8
+    },
+    statusAccepted: {
+        backgroundColor: '#00BCD4',
+        height: 20,
+        borderWidth: 0.5,
+        borderColor: '#fff',
+        paddingLeft: 3,
+        paddingRight: 3,
+        lineHeight: 20,
+        borderRadius: 8
     }
-  });
+});
